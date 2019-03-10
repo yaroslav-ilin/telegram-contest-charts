@@ -1,5 +1,3 @@
-const svgNS = "http://www.w3.org/2000/svg";
-
 const colors = [
   '#4bb450',
   '#fa6955',
@@ -55,11 +53,45 @@ function validateData (datasource) {
   return datasource;
 }
 
+function createSVGNode (tag, attrs) {
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  const node = document.createElementNS(svgNS, tag);
+  Object.keys(attrs).forEach(k => {
+    node.setAttributeNS(null, k, attrs[k]);
+  });
+  return node;
+}
+
 function render (datasources, host) {
   const nominalWidth = host.viewBox.baseVal.width;
   const nominalHeight = host.viewBox.baseVal.height;
 
-  const flatValues = datasources.reduce((xs, x) => xs.concat(x.raw), []);
+  if (host.querySelectorAll('path').length !== datasources.length) {
+    // invalidate rendered chart
+    host.innerHTML = '';
+    datasources.forEach((_, idx) => {
+      const color = colors[idx % colors.length];
+      const path = createSVGNode('path', {
+        'class': 'chart__polyline',
+        'stroke': color,
+      });
+      path.appendChild(
+        createSVGNode('animate', {
+          attributeName: 'd',
+          dur: '.3s',
+          begin: 'none',
+          fill: 'freeze',
+        })
+      );
+      host.appendChild(path);
+    });
+  }
+
+  const flatValues = datasources.reduce(
+    (xs, x) =>  x.shouldRender ? xs.concat(x.raw) : xs,
+    []
+  );
   const flatRawValues = flatValues.map(point => point[1]);
   const minValue = Math.min(0, Math.min(...flatRawValues));
   const maxValue = Math.max(...flatRawValues);
@@ -67,21 +99,31 @@ function render (datasources, host) {
   const horizontalStep = nominalWidth / datasources[0].raw.length;
   const verticalStep = nominalHeight / (maxValue - minValue);
 
-  host.innerHTML = '';
-  datasources.forEach((datasource, idx) => {
-    const color = colors[idx % colors.length];
+  Array.prototype.forEach.call(host.querySelectorAll('path'), (path, idx) => {
+    const datasource = datasources[idx];
+    const items = datasource.shouldRender
+      ? datasource.raw
+      : [];
 
-    const polyline = document.createElementNS(svgNS, 'polyline');
-    polyline.setAttributeNS(null, 'fill', 'none');
-    polyline.setAttributeNS(null, 'stroke-width', '2');
-    polyline.setAttributeNS(null, 'stroke', color);
-    datasource.raw.forEach((item, idx) => {
-      const point = host.createSVGPoint();
-      point.x = horizontalStep * idx;
-      point.y = nominalHeight - verticalStep * item[1];
-      polyline.points.appendItem(point);
-    });
-    host.appendChild(polyline);
+    const oldPoints = path.getAttributeNS(null, 'd');
+    const newPoints = items
+      .map((item, idx) => {
+        return (horizontalStep * idx) + ',' + (nominalHeight - verticalStep * item[1]);
+      })
+      .join(' ');
+
+    if (oldPoints) {
+      const animate = path.querySelector('animate');
+      animate.setAttributeNS(null, 'from', oldPoints);
+      animate.setAttributeNS(null, 'to', 'M' + newPoints);
+      animate.beginElement();
+    }
+
+    if (items.length) {
+      path.setAttributeNS(null, 'd', 'M' + newPoints);
+    } else {
+      path.removeAttributeNS(null, 'd');
+    }
   });
 }
 
@@ -92,9 +134,10 @@ function template (template, obj) {
 const axisSelector = document.getElementById('axis-selector');
 
 function renderFiltered () {
-  const selectedDataSources = datasources.filter(datasource => 
-    axisSelector.elements[datasource.tag].checked
-  );
+  const selectedDataSources = datasources.map(datasource => ({
+    ...datasource,
+    shouldRender: axisSelector.elements[datasource.tag].checked,
+  }));
 
   render(
     validateData(selectedDataSources),

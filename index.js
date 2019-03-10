@@ -101,12 +101,9 @@ function render (datasources, host) {
 
   Array.prototype.forEach.call(host.querySelectorAll('path'), (path, idx) => {
     const datasource = datasources[idx];
-    const items = datasource.shouldRender
-      ? datasource.raw
-      : [];
 
     const oldPoints = path.getAttributeNS(null, 'd');
-    const newPoints = items
+    const newPoints = datasource.raw
       .map((item, idx) => {
         return (horizontalStep * idx) + ',' + (nominalHeight - verticalStep * item[1]);
       })
@@ -119,10 +116,12 @@ function render (datasources, host) {
       animate.beginElement();
     }
 
-    if (items.length) {
-      path.setAttributeNS(null, 'd', 'M' + newPoints);
+    path.setAttributeNS(null, 'd', 'M' + newPoints);
+
+    if (datasource.shouldRender) {
+      path.classList.remove('chart__polyline_invisible');
     } else {
-      path.removeAttributeNS(null, 'd');
+      path.classList.add('chart__polyline_invisible');
     }
   });
 }

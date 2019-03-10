@@ -7,4 +7,10 @@
 .chart__polyline {
   stroke-width: 2px;
   fill: none;
+  transition: opacity .3s, visibility .3s;
+}
+
+.chart__polyline_invisible {
+  visibility: hidden;
+  opacity: 0;
 }

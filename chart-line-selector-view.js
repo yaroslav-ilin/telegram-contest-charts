@@ -15,7 +15,7 @@ function ChartLineSelectorView (presenter) {
 }
 
 ChartLineSelectorView.prototype.update = function () {
-  this.host.innerHTML = this._presenter.renderData.reduce((html, item) => {
+  this.host.innerHTML = this._presenter.lines.reduce((html, item) => {
     return html + template(chartLineSelectorItemTemplate, item);
   }, '');
 }
@@ -26,7 +26,6 @@ ChartLineSelectorView.prototype.getShouldRender = function (lineName) {
       ? this.host.elements[lineName].checked
       : true;
 
-    console.log(lineName, retVal);
     return retVal;
   };
 };

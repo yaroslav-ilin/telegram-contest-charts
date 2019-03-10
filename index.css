@@ -3,14 +3,82 @@
   width: 100%;
   margin: 0 auto;
 }
+.app__title {
+  margin: 0;
+}
+
 
 .chart__polyline {
-  stroke-width: 2px;
   fill: none;
-  transition: opacity .3s, visibility .3s;
 }
 
 .chart__polyline_invisible {
   visibility: hidden;
   opacity: 0;
+}
+
+
+.chart-main {
+  width: 100%;
+  height: 300px;
+}
+.chart-main__polyline {
+  stroke-width: 2px;
+  transition: opacity .3s, visibility .3s;
+}
+
+
+.chart-zoomer {
+  height: 50px;
+  position: relative;
+}
+.chart-zoomer__overlay {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(238,243,252,0.4);
+}
+.chart-zoomer__pan {
+  position: relative;
+
+  box-sizing: border-box;
+  height: 100%;
+  border: 1px solid rgb(221,234,243);
+  border-left-width: 0;
+  border-right-width: 0;
+  cursor: grab;
+}
+.chart-zoomer__pan:active {
+  cursor: grabbing;
+}
+.chart-zoomer__pan-left-border,.chart-zoomer__pan-right-border {
+  position: absolute;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  background-color: rgb(221,234,243);
+}
+.chart-zoomer__pan-left-border::before,
+.chart-zoomer__pan-right-border::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 12px;
+  transform: translateX(-4px);
+  height: 100%;
+}
+.chart-zoomer__pan-left-border { left: 0; }
+.chart-zoomer__pan-right-border { right: 0; }
+
+
+.chart-preview {
+  width: 100%;
+  height: 100%;
+}
+.chart-preview__polyline {
+  transition: opacity .15s ease-in, visibility .15s ease-in;
+}
+.chart-preview__polyline_invisible {
+  transition-timing-function: ease-out, ease-out;
 }

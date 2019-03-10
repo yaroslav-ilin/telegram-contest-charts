@@ -11,13 +11,19 @@
 </head>
 <body class="app app_theme-light">
 <div id="root">
-  <h1>Followers</h1>
+  <h1 class="app__title">Followers</h1>
 
   <div id="chart"></div>
-
-  <div id="controls"></div>
 </div>
 
+<script type="x-custom/template" id="chart-zoomer-template">
+  <div class="chart-zoomer__overlay">
+    <div class="chart-zoomer__pan">
+      <div class="chart-zoomer__pan-left-border"></div>
+      <div class="chart-zoomer__pan-right-border"></div>
+    </div>
+  </div>
+</script>
 <script type="x-custom/template" id="line-selector-item-template">
   <label style="color: {color}">
     <input type="checkbox" name="{tag}" checked="checked" />
@@ -26,10 +32,12 @@
 </script>
 
 <script src="util.js"></script>
-<script src="data-loader.js"></script>
+<script src="chart-zoomer-view.js"></script>
+<script src="chart-animation-strategies.js"></script>
 <script src="chart-view.js"></script>
 <script src="chart-line-selector-view.js"></script>
 <script src="chart-presenter.js"></script>
+<script src="data-loader.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

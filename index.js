@@ -1,46 +1,3 @@
-const colors = [
-  '#4bb450',
-  '#fa6955',
-];
-
-const datasources = [
-  {
-    tag: 'Joined',
-    raw: [
-      ['2018-03-03', 110],
-      ['2018-03-04', 75],
-      ['2018-03-05', 175],
-      ['2018-03-06', 69],
-      ['2018-03-07', 255],
-      ['2018-03-08', 125],
-      ['2018-03-09', 120],
-      ['2018-03-10', 150],
-      ['2018-03-11', 55],
-      ['2018-03-12', 65],
-      ['2018-03-13', 52],
-      ['2018-03-14', 80],
-    ],
-  },
-  {
-    tag: 'Left',
-    raw: [
-      ['2018-03-03', 49],
-      ['2018-03-04', 51],
-      ['2018-03-05', 70],
-      ['2018-03-06', 53],
-      ['2018-03-07', 90],
-      ['2018-03-08', 53],
-      ['2018-03-09', 75],
-      ['2018-03-10', 54],
-      ['2018-03-11', 47],
-      ['2018-03-12', 53],
-      ['2018-03-13', 26],
-      ['2018-03-14', 52],
-    ],
-  }
-];
-
-
 function validateData (datasource) {
   if (!datasource.length) {
     throw new Error('empty or invalid datasource');
@@ -53,25 +10,30 @@ function validateData (datasource) {
   return datasource;
 }
 
-function createSVGNode (tag, attrs) {
-  const svgNS = 'http://www.w3.org/2000/svg';
+const CHART = {
+  colors: [
+    '#4bb450',
+    '#fa6955',
+  ],
 
-  const node = document.createElementNS(svgNS, tag);
-  Object.keys(attrs).forEach(k => {
-    node.setAttributeNS(null, k, attrs[k]);
-  });
-  return node;
-}
+  init (parent) {
+    CHART._host = createSVGNode('svg', {
+      'class': 'chart',
+      'viewBox': '0 0 500 300',
+    });
 
-function render (datasources, host) {
-  const nominalWidth = host.viewBox.baseVal.width;
-  const nominalHeight = host.viewBox.baseVal.height;
+    parent.innerHTML = '';
+    parent.appendChild(CHART._host);
+  },
 
-  if (host.querySelectorAll('path').length !== datasources.length) {
-    // invalidate rendered chart
-    host.innerHTML = '';
-    datasources.forEach((_, idx) => {
-      const color = colors[idx % colors.length];
+  invalidate (timeseries) {
+    if (CHART._timeseries.length === timeseries.length) {
+      return;
+    }
+
+    CHART._host.innerHTML = '';
+    timeseries.forEach((_, idx) => {
+      const color = CHART.colors[idx % CHART.colors.length];
       const path = createSVGNode('path', {
         'class': 'chart__polyline',
         'stroke': color,
@@ -79,77 +41,96 @@ function render (datasources, host) {
       path.appendChild(
         createSVGNode('animate', {
           attributeName: 'd',
-          dur: '.3s',
-          begin: 'none',
+          dur: '0.3s',
           fill: 'freeze',
         })
       );
-      host.appendChild(path);
+      CHART._host.appendChild(path);
     });
-  }
+  },
 
-  const flatValues = datasources.reduce(
-    (xs, x) =>  x.shouldRender ? xs.concat(x.raw) : xs,
-    []
-  );
-  const flatRawValues = flatValues.map(point => point[1]);
-  const minValue = Math.min(0, Math.min(...flatRawValues));
-  const maxValue = Math.max(...flatRawValues);
+  render (timeseries) {
+    const host = CHART._host;
 
-  const horizontalStep = nominalWidth / datasources[0].raw.length;
-  const verticalStep = nominalHeight / (maxValue - minValue);
+    const nominalWidth = host.viewBox.baseVal.width;
+    const nominalHeight = host.viewBox.baseVal.height;
 
-  Array.prototype.forEach.call(host.querySelectorAll('path'), (path, idx) => {
-    const datasource = datasources[idx];
+    validateData(timeseries);
+    CHART.invalidate(timeseries);
+  
+    const flatValues = timeseries.reduce(
+      (xs, x) =>  x.shouldRender ? xs.concat(x.raw) : xs,
+      []
+    );
+    const flatRawValues = flatValues.map(point => point);
+    const minValue = Math.min(0, Math.min(...flatRawValues));
+    const maxValue = Math.max(...flatRawValues);
+  
+    const horizontalStep = nominalWidth / timeseries[0].raw.length;
+    const verticalStep = nominalHeight / (maxValue - minValue);
+  
+    Array.prototype.forEach.call(host.querySelectorAll('path'), (path, idx) => {
+      const datasource = timeseries[idx];
+  
+      if (datasource.shouldRender) {
+        path.classList.remove('chart__polyline_invisible');
+      } else {
+        path.classList.add('chart__polyline_invisible');
+      }
 
-    const oldPoints = path.getAttributeNS(null, 'd');
-    const newPoints = datasource.raw
-      .map((item, idx) => {
-        return (horizontalStep * idx) + ',' + (nominalHeight - verticalStep * item[1]);
-      })
-      .join(' ');
+      const oldPoints = path.getAttributeNS(null, 'd');
+      const newPoints = datasource.raw
+        .map((item, idx) => {
+          return parseFloat((horizontalStep * idx).toFixed(3))
+            + ','
+            + parseFloat((nominalHeight - verticalStep * item).toFixed(3));
+        })
+        .join(' ');
+  
+      if (oldPoints) {
+        const animate = path.querySelector('animate');
+        animate.setAttributeNS(null, 'from', oldPoints);
+        animate.setAttributeNS(null, 'to', 'M' + newPoints);
+        animate.beginElement();
+      }
 
-    if (oldPoints) {
-      const animate = path.querySelector('animate');
-      animate.setAttributeNS(null, 'from', oldPoints);
-      animate.setAttributeNS(null, 'to', 'M' + newPoints);
-      animate.beginElement();
-    }
+      path.setAttributeNS(null, 'd', 'M' + newPoints);
+    });
 
-    path.setAttributeNS(null, 'd', 'M' + newPoints);
+    CHART._timeseries = timeseries;
+  },
 
-    if (datasource.shouldRender) {
-      path.classList.remove('chart__polyline_invisible');
-    } else {
-      path.classList.add('chart__polyline_invisible');
-    }
-  });
-}
+  _host: null,
+  _timeseries: [],
+};
 
-function template (template, obj) {
-  return template.replace(/\{([^}]+)\}/g, (interpolation, path) => obj[path]);
-}
+// const curvesChooser = document.getElementById('curves-chooser');
 
-const axisSelector = document.getElementById('axis-selector');
+DataLoader.load('./chart_data.json').then(function (charts) {
+  const presenter = window.PRESENTER = new ChartPresenter(500, 300);
+  presenter.load(charts[0]);
+  presenter.attach(document.getElementById('chart'));
 
-function renderFiltered () {
-  const selectedDataSources = datasources.map(datasource => ({
-    ...datasource,
-    shouldRender: axisSelector.elements[datasource.tag].checked,
-  }));
+  // function renderFiltered () {
+  //   const selectedDataSources = charts[4].columns.map(datasource => ({
+  //     ...datasource,
+  //     shouldRender: curvesChooser.elements[datasource.tag].checked,
+  //   }));
 
-  render(
-    validateData(selectedDataSources),
-    document.getElementById('line-chart')
-  );
-}
+  //   CHART.render(
+  //     selectedDataSources,
+  //     document.getElementById('line-chart')
+  //   );
+  // }
 
-axisSelector.innerHTML = datasources.reduce((html, item) => {
-  return html + template(
-    document.getElementById('axis-selector-item-template').innerHTML,
-    item
-  );
-}, '');
+  // curvesChooser.innerHTML = charts[4].columns.reduce((html, item) => {
+  //   return html + template(
+  //     document.getElementById('curves-chooser-item-template').innerHTML,
+  //     item
+  //   );
+  // }, '');
 
-axisSelector.addEventListener('click', renderFiltered, false);
-renderFiltered();
+  // curvesChooser.addEventListener('click', renderFiltered, false);
+  // CHART.init(document.getElementById('chart'));
+  // renderFiltered();
+});

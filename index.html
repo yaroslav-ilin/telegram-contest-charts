@@ -9,31 +9,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="index.css" />
 </head>
-<body>
-<div id="root" class="app">
-<h1>Followers</h1>
-<div id="chart">
-    <svg id="line-chart" class="chart" viewBox="0 0 500 300"></svg>
-  <!-- <svg width="5cm" height="5cm"  viewBox="0 0 1000 1000"
-    xmlns="http://www.w3.org/2000/svg" version="1.1">
-    <polyline stroke="red" stroke-width="3" fill="none">
-    <animate attributeName="points" dur="5s" repeatCount="indefinite"
-        from="100,100 900,100 900,900 100,900 100,100"
-        to="200,200 800,500 800,500 200,800 200,200"
-    />
-    </polyline>
-  </svg> -->
+<body class="app app_theme-light">
+<div id="root">
+  <h1>Followers</h1>
+
+  <div id="chart"></div>
+
+  <div id="controls"></div>
 </div>
-<div id="controls">
-  <form id="axis-selector"></form>
-</div>
-</div>
-<script type="x-custom/template" id="axis-selector-item-template">
-  <label>
+
+<script type="x-custom/template" id="line-selector-item-template">
+  <label style="color: {color}">
     <input type="checkbox" name="{tag}" checked="checked" />
-    <span>{tag}</span>
+    <span>{name}</span>
   </label>
 </script>
+
+<script src="util.js"></script>
+<script src="data-loader.js"></script>
+<script src="chart-view.js"></script>
+<script src="chart-line-selector-view.js"></script>
+<script src="chart-presenter.js"></script>
 <script src="index.js"></script>
 </body>
 </html>

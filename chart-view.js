@@ -73,12 +73,13 @@ ChartView.prototype._invalidate = function (lines) {
 ChartView.prototype._update = function (lines) {
   Array.prototype.forEach.call(this.host.querySelectorAll('path'), (path, idx) => {
     const newLine = lines[idx];
+
+    this._updateAnimStrategy.trigger(path, this._lines[idx], newLine);
+
     const classNameMapper = newLine.shouldRender
       ? cl => [ cl, cl + '__polyline' ].join(' ')
       : cl => [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ');
     path.setAttribute('class', this._classNames.map(classNameMapper).join(' '));
-
-    this._updateAnimStrategy.trigger(path, this._lines[idx], newLine);
   });
   this._lines = lines;
 };

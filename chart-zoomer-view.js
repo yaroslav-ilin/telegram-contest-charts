@@ -19,7 +19,60 @@ function ChartZoomerView (presenter, chart) {
 
   let currentGesture = null;
   let startCoords = null;
+  
+  const move = (deltaX) => {
+    this.currentPanOffset = Math.max(
+      0,
+      Math.min(this.totalWidth - this.currentPanWidth, deltaX)
+    );
+  };
+
+  const resizeLeft = (deltaX) => {
+    this.currentPanOffset = Math.max(
+      0,
+      Math.min(startCoords[1] + deltaX, this.totalWidth - this.minWidth)
+    );
+    this.currentPanWidth = Math.max(
+      this.minWidth, 
+      Math.min(startCoords[2] - deltaX, this.totalWidth - this.currentPanOffset)
+    );
+  }
+
+  const resizeRight = (deltaX) => {
+    this.currentPanWidth = Math.max(
+      this.minWidth,
+      Math.min(deltaX, this.totalWidth - this.currentPanOffset)
+    );
+  }
+
+  function handleMouseUpOnce (evt) {
+    document.removeEventListener('mouseup', handleMouseUpOnce, false);
+    document.removeEventListener('mousemove', handleMouseMove, false);
+
+    currentGesture = null;
+  }
+
+  const handleMouseMove = (evt) => {
+    switch (currentGesture) {
+      case 'drag': {
+        move(startCoords[1] - (startCoords[0] - evt.clientX));
+        break;
+      }
+      case 'resize-left': {
+        resizeLeft(-(startCoords[0] - evt.clientX));
+        break;
+      }
+      case 'resize-right': {
+        resizeRight(startCoords[2] - (startCoords[0] - evt.clientX));
+        break;
+      }
+    }
+    this.syncPan();
+  };
+
   this.host.onmousedown = (evt) => {
+    document.addEventListener('mousemove', handleMouseMove, false);
+    document.addEventListener('mouseup', handleMouseUpOnce, false);
     startCoords = [ evt.clientX, this.currentPanOffset, this.currentPanWidth ];
 
     switch (evt.target.className) {
@@ -33,43 +86,6 @@ function ChartZoomerView (presenter, chart) {
       currentGesture = 'resize-right';
       break;
     }
-  };
-  this.host.onmousemove = (evt) => {
-    switch (currentGesture) {
-      case 'drag': {
-        const positionX = startCoords[1] - (startCoords[0] - evt.clientX);
-
-        this.currentPanOffset = Math.max(
-          0,
-          Math.min(this.totalWidth - this.currentPanWidth, positionX)
-        );
-        break;
-      }
-      case 'resize-left': {
-        const positionOffset = -(startCoords[0] - evt.clientX);
-        this.currentPanOffset = Math.max(
-          0,
-          Math.min(startCoords[1] + positionOffset, this.totalWidth - this.minWidth)
-        );
-        this.currentPanWidth = Math.max(
-          this.minWidth, 
-          Math.min(startCoords[2] - positionOffset, this.totalWidth - this.currentPanOffset)
-        );
-        break;
-      }
-      case 'resize-right': {
-        const positionX = startCoords[2] - (startCoords[0] - evt.clientX);
-        this.currentPanWidth = Math.max(
-          this.minWidth, 
-          Math.min(positionX, this.totalWidth - this.currentPanOffset)
-        );
-        break;
-      }
-    }
-    this.syncPan();
-  };
-  this.host.onmouseup = () => {
-    currentGesture = null;
   };
 }
 

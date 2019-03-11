@@ -33,6 +33,8 @@
   position: relative;
 }
 .chart-zoomer__overlay {
+  user-select: none;
+  touch-action: manipulation;
   position: absolute;
   top: 0;
   width: 100%;

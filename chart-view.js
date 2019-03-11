@@ -27,21 +27,21 @@ ChartView.prototype.render = function (lines) {
     ? this._nominalHeight / baseLine
     : 0;
 
-  const renderData = lines.map(
-    ({ tag, name, color, shouldRender, raw }) => ({
+  const renderData = lines.map(function ({ tag, name, color, shouldRender, raw }) {
+    return {
       tag,
       name,
       color,
       shouldRender,
       points: raw
-        .map((point, idx) => {
+        .map(function (point, idx) {
           return parseFloat((this._horizontalStep * idx).toFixed(3))
             + ','
             + parseFloat((this._nominalHeight - this._verticalStep * (point - this._presenter.minValue)).toFixed(3));
-        })
+        }.bind(this))
         .join(' '),
-    })
-  );
+    };
+  }.bind(this));
 
   if (lines.length === this._lines.length) {
     this._update(renderData);
@@ -51,35 +51,36 @@ ChartView.prototype.render = function (lines) {
 };
 
 ChartView.prototype._invalidate = function (lines) {
+  const that = this;
   this._lines = lines;
   this.host.innerHTML = '';
 
-  lines.forEach(({ color, shouldRender, points }) => {
+  lines.forEach(function ({ color, shouldRender, points }) {
     const classNameMapper = shouldRender
-      ? cl => [ cl, cl + '__polyline' ].join(' ')
-      : cl => [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ');
+      ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
+      : function (cl) { return [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ') };
     const path = createSVGNode('path', {
-      'class': this._classNames.map(classNameMapper).join(' '),
+      'class': that._classNames.map(classNameMapper).join(' '),
       'stroke': color,
       'd': 'M' + points,
     });
 
-    this._updateAnimStrategy.hook(path);
+    that._updateAnimStrategy.hook(path);
 
-    this.host.appendChild(path);
+    that.host.appendChild(path);
   });
 };
 
 ChartView.prototype._update = function (lines) {
-  Array.prototype.forEach.call(this.host.querySelectorAll('path'), (path, idx) => {
+  Array.prototype.forEach.call(this.host.querySelectorAll('path'), function (path, idx) {
     const newLine = lines[idx];
 
     this._updateAnimStrategy.trigger(path, this._lines[idx], newLine);
 
     const classNameMapper = newLine.shouldRender
-      ? cl => [ cl, cl + '__polyline' ].join(' ')
-      : cl => [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ');
+      ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
+      : function (cl) { return [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ') };
     path.setAttribute('class', this._classNames.map(classNameMapper).join(' '));
-  });
+  }.bind(this));
   this._lines = lines;
 };

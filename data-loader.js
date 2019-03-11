@@ -1,5 +1,7 @@
 const DataLoader = {
   load (url) {
-    return fetch(url).then(r => r.json());
+    return fetch(url).then(function (r) {
+      return r.json();
+    });
   },
 };

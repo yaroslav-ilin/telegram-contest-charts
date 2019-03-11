@@ -18,11 +18,11 @@ function ChartPresenter () {
       h: 50,
     })
   );
-  this.handleLineSelection = () => {
+  this.handleLineSelection = function () {
     this._calculate();
     this._chartZoomerView.render(this.lines);
     this._chartView.render(this.lines);
-  };
+  }.bind(this);
   this._chartLineSelectorView = new ChartLineSelectorView(this);
 
   // derived fields
@@ -38,7 +38,7 @@ ChartPresenter.prototype.load = function (data) {
   this._input = data;
 
   this.lines = [];
-  this._input.columns.forEach(column => {
+  this._input.columns.forEach(function (column) {
     const columnKey = column[0];
 
     switch (columnKey) {
@@ -60,7 +60,7 @@ ChartPresenter.prototype.load = function (data) {
         break;
       }
     }
-  });
+  }.bind(this));
 
   this._calculate();
 
@@ -77,7 +77,7 @@ ChartPresenter.prototype.attach = function (parent) {
 
 ChartPresenter.prototype._calculate = function () {
   const flatRawValues = this.lines.reduce(
-    (xs, x) =>  x.shouldRender ? xs.concat(x.raw) : xs,
+    function (xs, x) { return x.shouldRender ? xs.concat(x.raw) : xs },
     []
   );
 

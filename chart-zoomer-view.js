@@ -19,15 +19,15 @@ function ChartZoomerView (presenter, chart) {
 
   let currentGesture = null;
   let startCoords = null;
-  
-  const move = (deltaX) => {
+
+  const move = function (deltaX) {
     this.currentPanOffset = Math.max(
       0,
       Math.min(this.totalWidth - this.currentPanWidth, deltaX)
     );
-  };
+  }.bind(this);
 
-  const resizeLeft = (deltaX) => {
+  const resizeLeft = function (deltaX) {
     this.currentPanOffset = Math.max(
       0,
       Math.min(startCoords[1] + deltaX, this.totalWidth - this.minWidth)
@@ -36,14 +36,14 @@ function ChartZoomerView (presenter, chart) {
       this.minWidth, 
       Math.min(startCoords[2] - deltaX, this.totalWidth - this.currentPanOffset)
     );
-  }
+  }.bind(this);
 
-  const resizeRight = (deltaX) => {
+  const resizeRight = function (deltaX) {
     this.currentPanWidth = Math.max(
       this.minWidth,
       Math.min(deltaX, this.totalWidth - this.currentPanOffset)
     );
-  }
+  }.bind(this);
 
   function handleMouseUpOnce (evt) {
     document.removeEventListener('mouseup', handleMouseUpOnce, false);
@@ -52,7 +52,7 @@ function ChartZoomerView (presenter, chart) {
     currentGesture = null;
   }
 
-  const handleMouseMove = (evt) => {
+  const handleMouseMove = function (evt) {
     switch (currentGesture) {
       case 'drag': {
         move(startCoords[1] - (startCoords[0] - evt.clientX));
@@ -68,9 +68,49 @@ function ChartZoomerView (presenter, chart) {
       }
     }
     this.syncPan();
-  };
+  }.bind(this);
 
-  this.host.onmousedown = (evt) => {
+  this.host.addEventListener('touchstart', function (evt) {
+    startCoords = [ evt.touches[0].clientX, this.currentPanOffset, this.currentPanWidth ];
+
+    console.log(evt.target);
+    switch (evt.target.className) {
+    case 'chart-zoomer__pan':
+      currentGesture = 'drag';
+      break;
+    case 'chart-zoomer__pan-left-border':
+      currentGesture = 'resize-left';
+      break;
+    case 'chart-zoomer__pan-right-border':
+      currentGesture = 'resize-right';
+      break;
+    }
+  }.bind(this), { passive: true });
+
+  this.host.addEventListener('touchmove', function (evt) {
+    switch (currentGesture) {
+      case 'drag': {
+        move(startCoords[1] - (startCoords[0] - evt.changedTouches[0].clientX));
+        break;
+      }
+      case 'resize-left': {
+        resizeLeft(-(startCoords[0] - evt.changedTouches[0].clientX));
+        break;
+      }
+      case 'resize-right': {
+        resizeRight(startCoords[2] - (startCoords[0] - evt.changedTouches[0].clientX));
+        break;
+      }
+    }
+    this.syncPan();
+  }.bind(this), { passive: true });
+
+  this.host.addEventListener('touchend', function (evt) {
+    currentGesture = null;
+    this.syncPan();
+  }.bind(this), { passive: true });
+
+  this.host.onmousedown = function (evt) {
     document.addEventListener('mousemove', handleMouseMove, false);
     document.addEventListener('mouseup', handleMouseUpOnce, false);
     startCoords = [ evt.clientX, this.currentPanOffset, this.currentPanWidth ];
@@ -86,6 +126,9 @@ function ChartZoomerView (presenter, chart) {
       currentGesture = 'resize-right';
       break;
     }
+  }.bind(this);
+  this.host.ondragstart = function () {
+    return false;
   };
 }
 

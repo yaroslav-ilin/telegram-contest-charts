@@ -19,19 +19,14 @@ function ChartPresenter () {
     })
   );
   this.handleLineSelection = function () {
-    this._calculate();
-    this._chartZoomerView.render(this.lines);
-    this._chartView.render(this.lines);
+    this._chartZoomerView.render();
+    this._chartView.render();
   }.bind(this);
   this._chartLineSelectorView = new ChartLineSelectorView(this);
 
   // derived fields
   this.axis = {};
   this.lines = [];
-  this.minValue = 0;
-  this.maxValue = 0;
-
-  this.renderData = [];
 }
 
 ChartPresenter.prototype.load = function (data) {
@@ -55,6 +50,7 @@ ChartPresenter.prototype.load = function (data) {
         };
         Object.defineProperty(line, 'shouldRender', {
           get: this._chartLineSelectorView.getShouldRender(columnKey),
+          enumerable: true,
         });
         this.lines.push(line);
         break;
@@ -62,9 +58,7 @@ ChartPresenter.prototype.load = function (data) {
     }
   }.bind(this));
 
-  this._calculate();
-
-  this._chartView.render(this.lines);
+  this._chartView.render();
   this._chartLineSelectorView.update();
 };
 
@@ -72,20 +66,6 @@ ChartPresenter.prototype.attach = function (parent) {
   parent.appendChild(this._chartView.host);
   parent.appendChild(this._chartZoomerView.host);
   parent.appendChild(this._chartLineSelectorView.host);
-  this._chartZoomerView.render(this.lines);
+  this._chartZoomerView.render();
 };
 
-ChartPresenter.prototype._calculate = function () {
-  const flatRawValues = this.lines.reduce(
-    function (xs, x) { return x.shouldRender ? xs.concat(x.raw) : xs },
-    []
-  );
-
-  if (flatRawValues.length > 0) {
-    this.minValue = Math.max(0, Math.min(...flatRawValues));
-    this.maxValue = Math.max(...flatRawValues);
-  } else {
-    this.minValue = 0;
-    this.maxValue = 0;
-  }
-}

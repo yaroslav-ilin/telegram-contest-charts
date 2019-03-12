@@ -9,15 +9,20 @@ ChartUpdateAnimationStrategyEmpty.prototype.hook = function (path) {
   );
 };
 ChartUpdateAnimationStrategyEmpty.prototype.trigger = function (path, oldLine, newLine) {
-  if (newLine.shouldRender) {
-    path.setAttributeNS(null, 'd', 'M' + newLine.points);
+  const shouldRenderOld = oldLine.shouldRender;
+  const shouldRenderNew = newLine.shouldRender;
 
-    if (oldLine.shouldRender) {
-      const animate = path.querySelector('animate');
-      animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
-      animate.setAttributeNS(null, 'to', 'M' + newLine.points);
-      animate.beginElement();
-    }
+  if (shouldRenderNew) {
+    requestAnimationFrame(function () {
+      if (shouldRenderOld) {
+          const animate = path.querySelector('animate');
+          animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+          animate.setAttributeNS(null, 'to', 'M' + newLine.points);
+          animate.beginElement();
+      }
+
+      path.setAttributeNS(null, 'd', 'M' + newLine.points);
+    }.bind(this));
   }
 };
 
@@ -32,10 +37,12 @@ ChartUpdateAnimationStrategySmooth.prototype.hook = function (path) {
   );
 };
 ChartUpdateAnimationStrategySmooth.prototype.trigger = function (path, oldLine, newLine) {
-  const animate = path.querySelector('animate');
-  animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
-  animate.setAttributeNS(null, 'to', 'M' + newLine.points);
-  animate.beginElement();
+  requestAnimationFrame(function () {
+    const animate = path.querySelector('animate');
+    animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+    animate.setAttributeNS(null, 'to', 'M' + newLine.points);
+    animate.beginElement();
 
-  path.setAttributeNS(null, 'd', 'M' + newLine.points);
+    path.setAttributeNS(null, 'd', 'M' + newLine.points);
+  }.bind(this));
 };

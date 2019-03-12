@@ -138,8 +138,8 @@ ChartZoomerView.prototype.syncPan = function () {
     'transform: translateX(' + this.currentPanOffset + 'px)';
 };
 
-ChartZoomerView.prototype.render = function (lines) {
-  this._chart.render(lines);
+ChartZoomerView.prototype.render = function () {
+  this._chart.render();
   this.totalWidth = this.host.getBoundingClientRect().width;
   this.minWidth = this.totalWidth * .1;
   this.currentPanWidth = this.totalWidth / 5;

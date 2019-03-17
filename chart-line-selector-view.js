@@ -7,11 +7,11 @@ function ChartLineSelectorView (presenter) {
 
   this._presenter = presenter;
   this.host = document.createElement('form');
-  this.host.onclick = function (evt) {
+  this.host.onclick = (evt) => {
     if (evt.target.matches('input[type=checkbox]')) {
-      this._presenter.handleLineSelection();
+      this._presenter.handleLineSelection(this.host.elements);
     }
-  }.bind(this);
+  };
 }
 
 ChartLineSelectorView.prototype.update = function () {
@@ -19,13 +19,3 @@ ChartLineSelectorView.prototype.update = function () {
     return html + template(chartLineSelectorItemTemplate, item);
   }, '');
 }
-
-ChartLineSelectorView.prototype.getShouldRender = function (lineName) {
-  return function () {
-    const retVal = lineName in this.host.elements
-      ? this.host.elements[lineName].checked
-      : true;
-
-    return retVal;
-  }.bind(this);
-};

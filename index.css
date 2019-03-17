@@ -1,10 +1,53 @@
+html,body{height: 100%}
+body {
+  margin: 0;
+}
+
 .app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.app__content {
+  flex: 1 0 auto;
+
   max-width: 500px;
   width: 100%;
   margin: 0 auto;
 }
 .app__title {
   margin: 0;
+  padding: 16px;
+}
+.app__footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 16px;
+}
+
+.checkbox {
+  display: inline-block;
+  padding: 16px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.button {
+  background-color: transparent;
+  color: #3ca0e1;
+  font-size: 16px;
+  margin: 1px;
+  padding: 0;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+.button:hover,.button:focus {
+  margin-bottom: 0;
+  border-bottom: 1px dashed;
 }
 
 
@@ -31,6 +74,7 @@
 .chart-zoomer {
   height: 50px;
   position: relative;
+  overflow: hidden;
 }
 .chart-zoomer__overlay {
   user-select: none;
@@ -54,24 +98,25 @@
 .chart-zoomer__pan:active {
   cursor: grabbing;
 }
-.chart-zoomer__pan-left-border,.chart-zoomer__pan-right-border {
+.chart-zoomer__pan-left-ruler,.chart-zoomer__pan-right-ruler {
   position: absolute;
   width: 4px;
   height: 100%;
-  cursor: col-resize;
+  cursor: ew-resize;
   background-color: rgb(221,234,243);
 }
-.chart-zoomer__pan-left-border::before,
-.chart-zoomer__pan-right-border::after {
+.chart-zoomer__pan-left-ruler::before,
+.chart-zoomer__pan-right-ruler::after {
   content: '';
   position: absolute;
-  left: 0;
-  width: 12px;
+  width: 32px;
   transform: translateX(-4px);
   height: 100%;
 }
-.chart-zoomer__pan-left-border { left: 0; }
-.chart-zoomer__pan-right-border { right: 0; }
+.chart-zoomer__pan-left-ruler { left: 0; }
+.chart-zoomer__pan-left-ruler::before { left: -10px; }
+.chart-zoomer__pan-right-ruler { right: 0; }
+.chart-zoomer__pan-right-ruler::after { right: -16px; }
 
 
 .chart-preview {

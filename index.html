@@ -4,28 +4,31 @@
   <meta charset="utf-8" />
   <title>Chart App</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Chart App" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="index.css" />
 </head>
-<body class="app app_theme-light">
-<div id="root">
-  <h1 class="app__title">Followers</h1>
+<body>
+<div id="root" class="app">
+  <main id="chart" class="app__content">
+    <h1 class="app__title">Followers</h1>
+  </main>
 
-  <div id="chart"></div>
+  <footer class="app__footer">
+    <button class="button" id="themeToggle"></button>
+  </footer>
 </div>
 
 <script type="x-custom/template" id="chart-zoomer-template">
   <div class="chart-zoomer__overlay">
     <div class="chart-zoomer__pan">
-      <div class="chart-zoomer__pan-left-border"></div>
-      <div class="chart-zoomer__pan-right-border"></div>
+      <div class="chart-zoomer__pan-left-ruler"></div>
+      <div class="chart-zoomer__pan-right-ruler"></div>
     </div>
   </div>
 </script>
 <script type="x-custom/template" id="line-selector-item-template">
-  <label style="color: {color}">
+  <label class="checkbox" style="color: {color}">
     <input type="checkbox" name="{tag}" checked="checked" />
     <span>{name}</span>
   </label>

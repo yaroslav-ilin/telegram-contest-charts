@@ -13,3 +13,19 @@ function template (template, obj) {
     return obj[path];
   });
 }
+
+function throttle(fn, ms) {
+  let timeout = null;
+
+  return function() {
+    if (timeout) {
+      return;
+    }
+
+    // fn.call(this);
+    timeout = setTimeout(() => {
+      fn.call(this);
+      timeout = null;
+    }, ms);
+  }
+}

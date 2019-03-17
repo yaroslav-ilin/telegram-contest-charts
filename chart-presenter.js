@@ -18,10 +18,24 @@ function ChartPresenter () {
       h: 50,
     })
   );
-  this.handleLineSelection = function () {
+  this.handleLineSelection = (elements) => {
+    this.lines = this.lines.map(line => ({
+      ...line,
+      shouldRender: elements[line.tag].checked,
+    }));
+
     this._chartZoomerView.render();
-    this._chartView.render();
-  }.bind(this);
+
+    const { idxStart, idxEnd } = this._chartZoomerView;
+    this._chartView.render(idxStart, idxEnd);
+  };
+  this.handlePan = throttle(() => {
+    const { idxStart, idxEnd } = this._chartZoomerView;
+    this._chartView.render(idxStart, idxEnd);
+  }, 300, {
+    leading: true,
+    trailing: true,
+  });
   this._chartLineSelectorView = new ChartLineSelectorView(this);
 
   // derived fields
@@ -41,24 +55,20 @@ ChartPresenter.prototype.load = function (data) {
         this.axis = column.slice(1);
         break;
       default: {
-        const line = {
+        this.lines.push({
           tag: columnKey,
           name: this._input.names[columnKey],
           color: this._input.colors[columnKey],
           type: this._input.types[columnKey],
+          shouldRender: true,
           raw: column.slice(1),
-        };
-        Object.defineProperty(line, 'shouldRender', {
-          get: this._chartLineSelectorView.getShouldRender(columnKey),
-          enumerable: true,
         });
-        this.lines.push(line);
         break;
       }
     }
   }.bind(this));
 
-  this._chartView.render();
+  this._chartZoomerView.render();
   this._chartLineSelectorView.update();
 };
 
@@ -66,6 +76,10 @@ ChartPresenter.prototype.attach = function (parent) {
   parent.appendChild(this._chartView.host);
   parent.appendChild(this._chartZoomerView.host);
   parent.appendChild(this._chartLineSelectorView.host);
-  this._chartZoomerView.render();
+
+  this._chartZoomerView.handleAttach();
+
+  const { idxStart, idxEnd } = this._chartZoomerView;
+  this._chartView.render(idxStart, idxEnd);
 };
 

@@ -75,35 +75,39 @@ body {
   height: 50px;
   position: relative;
   overflow: hidden;
-}
-.chart-zoomer__overlay {
   user-select: none;
   touch-action: manipulation;
-  position: absolute;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(238,243,252,0.4);
 }
 .chart-zoomer__pan {
-  position: relative;
-
-  box-sizing: border-box;
+  cursor: grab;
+  position: absolute;
+  top: 0;
   height: 100%;
+  box-sizing: border-box;
   border: 1px solid rgb(221,234,243);
   border-left-width: 0;
   border-right-width: 0;
-  cursor: grab;
 }
 .chart-zoomer__pan:active {
   cursor: grabbing;
 }
-.chart-zoomer__pan-left-ruler,.chart-zoomer__pan-right-ruler {
+.chart-zoomer__pan::after{
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0px 0px 0px 999px rgba(238,243,252,0.4);
+}
+.chart-zoomer__pan-left-ruler,
+.chart-zoomer__pan-right-ruler {
   position: absolute;
   width: 4px;
   height: 100%;
   cursor: ew-resize;
   background-color: rgb(221,234,243);
+  /* z-index: -1; */
 }
 .chart-zoomer__pan-left-ruler::before,
 .chart-zoomer__pan-right-ruler::after {
@@ -112,6 +116,7 @@ body {
   width: 32px;
   transform: translateX(-4px);
   height: 100%;
+  z-index: 1;
 }
 .chart-zoomer__pan-left-ruler { left: 0; }
 .chart-zoomer__pan-left-ruler::before { left: -10px; }

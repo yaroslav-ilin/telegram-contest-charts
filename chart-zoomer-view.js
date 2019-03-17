@@ -177,7 +177,7 @@ ChartZoomerView.prototype.syncPan = function (left = this._offsetLeft, right = t
 
   const totalCount = this._presenter.axis.length;
   this.idxStart = Math.floor(totalCount / 100 * left);
-  this.idxEnd = this.idxStart + Math.floor(totalCount / 100 * size);
+  this.idxEnd = this.idxStart + Math.floor(totalCount / 100 * size) - 1;
 
   this._presenter.handlePan();
 }

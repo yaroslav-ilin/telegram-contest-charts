@@ -65,9 +65,10 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   });
 
   if (lines.length === this._lines.length) {
-    this._update(renderData);
+    return this._update(renderData);
   } else {
     this._invalidate(renderData);
+    return Promise.resolve();
   }
 };
 
@@ -81,23 +82,22 @@ ChartView.prototype._hide = function () {
 };
 
 ChartView.prototype._invalidate = function (lines) {
-  const that = this;
   this._lines = lines;
   this.host.innerHTML = '';
 
-  lines.forEach(function ({ color, shouldRender, points }) {
+  lines.forEach(({ color, shouldRender, points }) => {
     const classNameMapper = shouldRender
       ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
       : function (cl) { return [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ') };
     const path = createSVGNode('path', {
-      'class': that._classNames.map(classNameMapper).join(' '),
+      'class': this._classNames.map(classNameMapper).join(' '),
       'stroke': color,
       'd': 'M' + points,
     });
 
-    that._updateAnimStrategy.hook(path);
+    this._updateAnimStrategy.hook(path);
 
-    that.host.appendChild(path);
+    this.host.appendChild(path);
   });
 };
 
@@ -106,16 +106,18 @@ ChartView.prototype._update = function (lines) {
   const updateAnimStrategy = this._updateAnimStrategy;
   const classNames = this._classNames;
 
-  Array.prototype.forEach.call(this.host.querySelectorAll('path'), function (path, idx) {
-    const oldLine = oldLines[idx];
-    const newLine = lines[idx];
-
-    updateAnimStrategy.trigger(path, oldLine, newLine);
-
-    const classNameMapper = newLine.shouldRender
-      ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
-      : function (cl) { return [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ') };
-    path.setAttribute('class', classNames.map(classNameMapper).join(' '));
-  });
   this._lines = lines;
+  return Promise.all(
+    Array.prototype.map.call(this.host.querySelectorAll('path'), function (path, idx) {
+      const oldLine = oldLines[idx];
+      const newLine = lines[idx];
+
+      const classNameMapper = newLine.shouldRender
+        ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
+        : function (cl) { return [ cl, cl + '__polyline', cl + '__polyline_invisible' ].join(' ') };
+      path.setAttribute('class', classNames.map(classNameMapper).join(' '));
+
+      return updateAnimStrategy.trigger(path, oldLine, newLine);
+    })
+  );
 };

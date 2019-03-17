@@ -17,12 +17,11 @@ function template (template, obj) {
 function throttle(fn, ms) {
   let timeout = null;
 
-  return function() {
+  return function () {
     if (timeout) {
       return;
     }
 
-    // fn.call(this);
     timeout = setTimeout(() => {
       fn.call(this);
       timeout = null;

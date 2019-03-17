@@ -13,17 +13,23 @@ ChartUpdateAnimationStrategyEmpty.prototype.trigger = function (path, oldLine, n
   const shouldRenderNew = newLine.shouldRender;
 
   if (shouldRenderNew) {
-    this.raf(function () {
+    const animate = path.querySelector('animate');
+    // FIXME: extract rAF to the caller to sync the lines on the chart
+    this.raf(() => {
       if (shouldRenderOld) {
-          const animate = path.querySelector('animate');
-          animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
-          animate.setAttributeNS(null, 'to', 'M' + newLine.points);
-          animate.beginElement();
+        animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+        animate.setAttributeNS(null, 'to', 'M' + newLine.points);
+        animate.beginElement();
       }
 
       path.setAttributeNS(null, 'd', 'M' + newLine.points);
-    }.bind(this));
+    });
+    return new Promise(resolve => {
+      animate.onend = resolve;
+    });
   }
+
+  return Promise.resolve();
 };
 ChartUpdateAnimationStrategyEmpty.prototype.raf = typeof requestAnimationFrame === 'function'
 ? requestAnimationFrame.bind(window)
@@ -42,17 +48,20 @@ ChartUpdateAnimationStrategySmooth.prototype.hook = function (path) {
   );
 };
 ChartUpdateAnimationStrategySmooth.prototype.trigger = function (path, oldLine, newLine) {
-  this.raf(function () {
-    const animate = path.querySelector('animate');
+  const animate = path.querySelector('animate');
+  this.raf(() => {
     animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
     animate.setAttributeNS(null, 'to', 'M' + newLine.points);
     animate.beginElement();
-
     path.setAttributeNS(null, 'd', 'M' + newLine.points);
-  }.bind(this));
+  });
+  return new Promise(resolve => {
+    animate.onend = resolve;
+  });
 };
-ChartUpdateAnimationStrategySmooth.prototype.raf = typeof requestAnimationFrame === 'function'
-? requestAnimationFrame.bind(window)
-: function (cb) {
-  cb();
-};
+ChartUpdateAnimationStrategySmooth.prototype.raf =
+typeof requestAnimationFrame === 'function'
+  ? requestAnimationFrame.bind(window)
+  : function (cb) {
+    cb();
+  };

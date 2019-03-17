@@ -18,24 +18,6 @@ function ChartPresenter () {
       h: 50,
     })
   );
-  this.handleLineSelection = (elements) => {
-    this.lines = this.lines.map(line => ({
-      ...line,
-      shouldRender: elements[line.tag].checked,
-    }));
-
-    this._chartZoomerView.render();
-
-    const { idxStart, idxEnd } = this._chartZoomerView;
-    this._chartView.render(idxStart, idxEnd);
-  };
-  this.handlePan = throttle(() => {
-    const { idxStart, idxEnd } = this._chartZoomerView;
-    this._chartView.render(idxStart, idxEnd);
-  }, 300, {
-    leading: true,
-    trailing: true,
-  });
   this._chartLineSelectorView = new ChartLineSelectorView(this);
 
   // derived fields
@@ -83,3 +65,32 @@ ChartPresenter.prototype.attach = function (parent) {
   this._chartView.render(idxStart, idxEnd);
 };
 
+ChartPresenter.prototype.handleLineSelection = function (elements) {
+  this.lines = this.lines.map(line => ({
+    ...line,
+    shouldRender: elements[line.tag].checked,
+  }));
+
+  this._chartZoomerView.render();
+
+  const { idxStart, idxEnd } = this._chartZoomerView;
+  this._chartView.render(idxStart, idxEnd);
+};
+
+ChartPresenter.prototype.handlePan = (function () {
+  let queuedPan = null;
+  let pendingPanAnimation = Promise.resolve();
+
+  return function () {
+    if (!queuedPan) {
+      pendingPanAnimation.then(() => {
+        pendingPanAnimation = queuedPan();
+        queuedPan = null;
+      });
+    }
+    queuedPan = () => {
+      const { idxStart, idxEnd } = this._chartZoomerView;
+      return this._chartView.render(idxStart, idxEnd);
+    };
+  };
+}());

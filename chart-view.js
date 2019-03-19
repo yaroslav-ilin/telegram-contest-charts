@@ -25,8 +25,7 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   });
 
   if (renderedCount <= 0) {
-    this._hide();
-    return;
+    return this._hide();
   }
 
   let minValue = Infinity;
@@ -73,7 +72,7 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
 };
 
 ChartView.prototype._hide = function () {
-  this._update(this._lines.map(function (line) {
+  return this._update(this._lines.map(function (line) {
     return {
       ...line,
       shouldRender: false,

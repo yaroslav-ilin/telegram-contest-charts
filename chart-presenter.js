@@ -78,19 +78,23 @@ ChartPresenter.prototype.handleLineSelection = function (elements) {
 };
 
 ChartPresenter.prototype.handlePan = (function () {
-  let queuedPan = null;
-  let pendingPanAnimation = Promise.resolve();
+  let isAnimationPending = false;
+  let nextAnimation = null;
 
   return function () {
-    if (!queuedPan) {
-      pendingPanAnimation.then(() => {
-        pendingPanAnimation = queuedPan();
-        queuedPan = null;
+    nextAnimation = () => {
+      nextAnimation = null;
+
+      const { idxStart, idxEnd } = this._chartZoomerView;
+      return this._chartView.render(idxStart, idxEnd)
+        .then(() => nextAnimation ? nextAnimation() : null);
+    };
+
+    if (!isAnimationPending) {
+      isAnimationPending = true;
+      nextAnimation().then(() => {
+        isAnimationPending = false;
       });
     }
-    queuedPan = () => {
-      const { idxStart, idxEnd } = this._chartZoomerView;
-      return this._chartView.render(idxStart, idxEnd);
-    };
   };
 }());

@@ -13,23 +13,27 @@ ChartUpdateAnimationStrategyEmpty.prototype.trigger = function (path, oldLine, n
   const shouldRenderNew = newLine.shouldRender;
 
   if (shouldRenderNew) {
-    const animate = path.querySelector('animate');
-    // FIXME: extract rAF to the caller to sync the lines on the chart
-    this.raf(() => {
-      if (shouldRenderOld) {
-        animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
-        animate.setAttributeNS(null, 'to', 'M' + newLine.points);
-        animate.beginElement();
-      }
-
-      path.setAttributeNS(null, 'd', 'M' + newLine.points);
-    });
     return new Promise(resolve => {
-      animate.onend = resolve;
-    });
-  }
+      const toPoints = 'M' + newLine.points;
 
-  return Promise.resolve();
+      // FIXME: extract rAF to the caller to sync the lines on the chart
+      this.raf(() => {
+        if (shouldRenderOld) {
+          const animate = path.querySelector('animate');
+          animate.onend = resolve;
+          animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+          animate.setAttributeNS(null, 'to', toPoints);
+          animate.beginElement();
+        } else {
+          resolve();
+        }
+  
+        path.setAttributeNS(null, 'd', toPoints);
+      });
+    });
+  } else {
+    return Promise.resolve();
+  }
 };
 ChartUpdateAnimationStrategyEmpty.prototype.raf = typeof requestAnimationFrame === 'function'
 ? requestAnimationFrame.bind(window)
@@ -47,21 +51,52 @@ ChartUpdateAnimationStrategySmooth.prototype.hook = function (path) {
     })
   );
 };
-ChartUpdateAnimationStrategySmooth.prototype.trigger = function (path, oldLine, newLine) {
-  const animate = path.querySelector('animate');
-  this.raf(() => {
-    animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
-    animate.setAttributeNS(null, 'to', 'M' + newLine.points);
-    animate.beginElement();
-    path.setAttributeNS(null, 'd', 'M' + newLine.points);
-  });
+ChartUpdateAnimationStrategySmooth.prototype._triggerRAF = function (path, oldLine, newLine) {
   return new Promise(resolve => {
-    animate.onend = resolve;
+    const toPoints = 'M' + newLine.points;
+
+    this.raf(() => {
+      const animate = path.querySelector('animate');
+      animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+      animate.setAttributeNS(null, 'to', toPoints);
+      animate.beginElement();
+      path.setAttributeNS(null, 'd', toPoints);
+
+      const start = animate.getStartTime();
+      const duration = animate.getSimpleDuration();
+      const end = start + duration;
+      const rAFiteration = () => {
+        if (animate.getCurrentTime() >= end) {
+          resolve();
+        } else {
+          this.raf(rAFiteration);
+        }
+      };
+      rAFiteration();
+    });
   });
 };
+ChartUpdateAnimationStrategySmooth.prototype._triggerWithEvent = function (path, oldLine, newLine) {
+  return new Promise(resolve => {
+    const toPoints = 'M' + newLine.points;
+
+    this.raf(() => {
+      const animate = path.querySelector('animate');
+      animate.onend = resolve;
+      animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
+      animate.setAttributeNS(null, 'to', toPoints);
+      animate.beginElement();
+      path.setAttributeNS(null, 'd', toPoints);
+    });
+  });
+};
+ChartUpdateAnimationStrategySmooth.prototype.trigger = (function () {
+  return typeof createSVGNode('animate', {}).onend === 'undefined'
+    ? ChartUpdateAnimationStrategySmooth.prototype._triggerRAF
+    : ChartUpdateAnimationStrategySmooth.prototype._triggerWithEvent;
+}());
+
 ChartUpdateAnimationStrategySmooth.prototype.raf =
 typeof requestAnimationFrame === 'function'
   ? requestAnimationFrame.bind(window)
-  : function (cb) {
-    cb();
-  };
+  : setTimeout.bind(window);

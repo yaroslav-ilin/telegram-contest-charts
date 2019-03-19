@@ -11,7 +11,7 @@
 <body>
 <div id="root" class="app">
   <main id="chart" class="app__content">
-    <h1 class="app__title">Followers</h1>
+    <h1 class="app__title"></h1>
   </main>
 
   <footer class="app__footer">
@@ -26,9 +26,10 @@
   </div>
 </script>
 <script type="x-custom/template" id="line-selector-item-template">
-  <label class="checkbox" style="color: {color}">
-    <input type="checkbox" name="{tag}" checked="checked" />
-    <span>{name}</span>
+  <label class="checkbox">
+    <input type="checkbox" checked="checked" name="{tag}" />
+    <span class="checkbox__checkmark" style="color: {color}"></span>
+    <span class="checkbox__label">{name}</span>
   </label>
 </script>
 

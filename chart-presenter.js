@@ -29,7 +29,7 @@ ChartPresenter.prototype.load = function (data) {
   this._input = data;
 
   this.lines = [];
-  this._input.columns.forEach(function (column) {
+  this._input.columns.forEach(column => {
     const columnKey = column[0];
 
     switch (columnKey) {
@@ -48,8 +48,9 @@ ChartPresenter.prototype.load = function (data) {
         break;
       }
     }
-  }.bind(this));
+  });
 
+  document.querySelector('.app__title').innerHTML = data.title;
   this._chartZoomerView.render();
   this._chartLineSelectorView.update();
 };
@@ -98,3 +99,7 @@ ChartPresenter.prototype.handlePan = (function () {
     }
   };
 }());
+
+ChartPresenter.prototype.dispose = function () {
+  this._chartZoomerView.dispose();
+};

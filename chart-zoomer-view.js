@@ -29,7 +29,7 @@ function ChartZoomerView (presenter, chart) {
 
   this._touchPoints = {};
 
-  this._addPassiveListener(host, 'touchstart', (evt) => {
+  host.addEventListener('touchstart', (evt) => {
     for (let i = 0; i < evt.changedTouches.length; i++) {
       const touch = evt.changedTouches[i];
 
@@ -44,14 +44,14 @@ function ChartZoomerView (presenter, chart) {
 
       this._aquiredLocks[touch.target.className] = true;
     }
-  });
-  this._addPassiveListener(host, 'mousedown', (evt) => {
+  }, this._passiveListenerOpts);
+  host.addEventListener('mousedown', (evt) => {
     this._handleResizeStart({
       identifier: '-1',
       target: evt.target,
       pageX: evt.pageX,
     });
-  });
+  }, this._passiveListenerOpts);
 
   host.ontouchmove = (evt) => {
     let isSizeChanged = false;
@@ -73,16 +73,17 @@ function ChartZoomerView (presenter, chart) {
       evt.preventDefault();
     }
   };
-  document.addEventListener('mousemove', (evt) => {
+  const handleMouseMove = (evt) => {
     const touchPoint = this._touchPoints['-1'];
 
     if (touchPoint) {
       evt.preventDefault();
       touchPoint(evt.pageX);
     }
-  }, false);
+  };
+  document.addEventListener('mousemove', handleMouseMove, false);
 
-  this._addPassiveListener(host, 'touchend', (evt) => {
+  host.addEventListener('touchend', (evt) => {
     for (let i = 0; i < evt.changedTouches.length; i++) {
       const touch = evt.changedTouches[i];
 
@@ -90,10 +91,18 @@ function ChartZoomerView (presenter, chart) {
         this._aquiredLocks[touch.target.className] = false;
       };
     }
-  });
-  document.addEventListener('mouseup', (evt) => {
+  }, this._passiveListenerOpts);
+  const handleMouseUp = (evt) => {
     delete this._touchPoints['-1'];
-  }, false);
+  };
+  document.addEventListener('mouseup', handleMouseUp, this._passiveListenerOpts);
+
+  this.dispose = () => {
+    document.removeEventListener('mousemove', handleMouseMove, false);
+    document.removeEventListener('mouseup', handleMouseUp, this._passiveListenerOpts);
+
+    this.dispose = new Function();
+  };
 }
 
 ChartZoomerView.prototype.render = function () {
@@ -182,7 +191,7 @@ ChartZoomerView.prototype.syncPan = function (left = this._offsetLeft, right = t
   this._presenter.handlePan();
 }
 
-ChartZoomerView.prototype._addPassiveListener = (function () {
+ChartZoomerView.prototype._passiveListenerOpts = (function () {
   let supportsPassive = false;
   try {
     const opts = Object.defineProperty({}, 'passive', {
@@ -194,6 +203,9 @@ ChartZoomerView.prototype._addPassiveListener = (function () {
     window.removeEventListener("testPassive", null, opts);
   } catch (e) {}
 
+  return supportsPassive ? { passive: true } : false;
+}());
+ChartZoomerView.prototype._addPassiveListener = (function () {
   return function (target, evt, handler) {
     const opts = supportsPassive ? { passive: true } : false;
     target.addEventListener(evt, handler, opts);

@@ -9,7 +9,7 @@ function createSVGNode (tag, attrs) {
 }
 
 function template (template, obj) {
-  return template.replace(/\{([^}]+)\}/g, function (interpolation, path) {
+  return template.trim().replace(/\{([^}]+)\}/g, function (interpolation, path) {
     return obj[path];
   });
 }

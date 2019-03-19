@@ -7,6 +7,7 @@ function ChartLineSelectorView (presenter) {
 
   this._presenter = presenter;
   this.host = document.createElement('form');
+  this.host.className = 'chart-lines-selector';
   this.host.onclick = (evt) => {
     if (evt.target.matches('input[type=checkbox]')) {
       this._presenter.handleLineSelection(this.host.elements);

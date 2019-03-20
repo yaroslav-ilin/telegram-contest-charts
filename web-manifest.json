@@ -1,0 +1,20 @@
+{
+  "short_name": "Charts",
+  "name": "Chart Application",
+  "icons": [
+    {
+      "src": "./img/icons/icons-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "./img/icons/icons-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./?utm_source=pwa",
+  "background_color": "#242f3d",
+  "display": "standalone",
+  "theme_color": "#242f3d"
+}

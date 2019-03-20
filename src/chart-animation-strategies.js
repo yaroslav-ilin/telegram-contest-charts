@@ -1,3 +1,6 @@
+/**
+  @constructor
+ */
 function ChartUpdateAnimationStrategyEmpty () {}
 ChartUpdateAnimationStrategyEmpty.prototype.hook = function (path) {
   path.appendChild(
@@ -23,7 +26,7 @@ ChartUpdateAnimationStrategyEmpty.prototype.trigger = function (path, oldLine, n
           animate.onend = resolve;
           animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
           animate.setAttributeNS(null, 'to', toPoints);
-          animate.beginElement();
+          animate['beginElement']();
         } else {
           resolve();
         }
@@ -41,6 +44,9 @@ ChartUpdateAnimationStrategyEmpty.prototype.raf = typeof requestAnimationFrame =
   cb();
 };
 
+/**
+  @constructor
+ */
 function ChartUpdateAnimationStrategySmooth () {}
 ChartUpdateAnimationStrategySmooth.prototype.hook = function (path) {
   path.appendChild(
@@ -59,7 +65,7 @@ ChartUpdateAnimationStrategySmooth.prototype._triggerRAF = function (path, oldLi
       const animate = path.querySelector('animate');
       animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
       animate.setAttributeNS(null, 'to', toPoints);
-      animate.beginElement();
+      animate['beginElement']();
       path.setAttributeNS(null, 'd', toPoints);
 
       const start = animate.getStartTime();
@@ -85,7 +91,7 @@ ChartUpdateAnimationStrategySmooth.prototype._triggerWithEvent = function (path,
       animate.onend = resolve;
       animate.setAttributeNS(null, 'from', 'M' + oldLine.points);
       animate.setAttributeNS(null, 'to', toPoints);
-      animate.beginElement();
+      animate['beginElement']();
       path.setAttributeNS(null, 'd', toPoints);
     });
   });

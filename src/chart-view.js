@@ -1,3 +1,6 @@
+/**
+  @constructor
+ */
 function ChartView (presenter, config) {
   if (!(this instanceof ChartView)) {
     return new ChartView(presenter, config);

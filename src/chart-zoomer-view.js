@@ -1,5 +1,8 @@
 const chartZoomerTemplate = document.getElementById('chart-zoomer-template').innerHTML;
 
+/**
+  @constructor
+ */
 function ChartZoomerView (presenter, chart) {
   if (!(this instanceof ChartZoomerView)) {
     return new ChartZoomerView(presenter, chart);
@@ -9,7 +12,7 @@ function ChartZoomerView (presenter, chart) {
 
   const host = this.host = document.createElement('div');
   host.className = 'chart-zoomer';
-  host.innerHTML = template(chartZoomerTemplate);
+  host.innerHTML = template(chartZoomerTemplate, {});
   host.insertBefore(this._chart.host, host.firstChild);
 
   this.pan = host.querySelector('.chart-zoomer__pan');
@@ -204,10 +207,4 @@ ChartZoomerView.prototype._passiveListenerOpts = (function () {
   } catch (e) {}
 
   return supportsPassive ? { passive: true } : false;
-}());
-ChartZoomerView.prototype._addPassiveListener = (function () {
-  return function (target, evt, handler) {
-    const opts = supportsPassive ? { passive: true } : false;
-    target.addEventListener(evt, handler, opts);
-  };
 }());

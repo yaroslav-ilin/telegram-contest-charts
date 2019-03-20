@@ -1,5 +1,8 @@
 const chartLineSelectorItemTemplate = document.getElementById('line-selector-item-template').innerHTML;
 
+/**
+  @constructor
+ */
 function ChartLineSelectorView (presenter) {
   if (!(this instanceof ChartLineSelectorView)) {
     return new ChartLineSelectorView(presenter);

@@ -1,3 +1,6 @@
+/**
+  @constructor
+ */
 function ChartPresenter () {
   if (!(this instanceof ChartPresenter)) {
     return new ChartPresenter();
@@ -32,7 +35,7 @@ ChartPresenter.prototype.load = function (data) {
   document.querySelector('.app__title').innerHTML = data.title;
 
   this.lines = [];
-  this._input.columns.forEach(column => {
+  this._input['columns'].forEach(column => {
     const columnKey = column[0];
 
     switch (columnKey) {
@@ -42,9 +45,9 @@ ChartPresenter.prototype.load = function (data) {
       default: {
         this.lines.push({
           tag: columnKey,
-          name: this._input.names[columnKey],
-          color: this._input.colors[columnKey],
-          type: this._input.types[columnKey],
+          name: this._input['names'][columnKey],
+          color: this._input['colors'][columnKey],
+          type: this._input['types'][columnKey],
           shouldRender: true,
           raw: column.slice(1),
         });

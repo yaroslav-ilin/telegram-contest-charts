@@ -25,6 +25,13 @@ ChartView.prototype.prepareAxis = function (axis) {
       'y': '100%',
     });
     node.innerHTML = dateFormat(date);
+    node.appendChild(
+      createSVGNode('animate', {
+        attributeName: 'd',
+        dur: '0.3s',
+        fill: 'freeze',
+      })
+    );
 
     return node;
   });
@@ -56,6 +63,7 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   const nominalHeight = this._nominalHeight;
   const verticalStep = baseLine === 0 ? 0 : nominalHeight / baseLine;
 
+  // FIXME: x points can be counted once per chart, not per line
   const renderData = lines.map(function ({ tag, name, color, shouldRender, raw }) {
     const totalPointsCount = raw.length;
     const points = new Array(totalPointsCount);
@@ -76,16 +84,11 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   });
 
   if (lines.length === this._lines.length) {
-    // this._renderAxis({
-    //   idxStart,
-    //   idxEnd,
-    //   horizontalStep,
-    //   verticalStep,
-    // });
+    // this._renderAxis({ idxStart, idxEnd, horizontalStep, verticalStep });
     return this._update(renderData);
   } else {
     this._invalidate(renderData);
-    // this._renderAxis(horizontalStep, verticalStep);
+    // this._renderAxis({ idxStart, idxEnd, horizontalStep, verticalStep });
     return Promise.resolve();
   }
 };
@@ -95,18 +98,18 @@ ChartView.prototype._renderAxis = function ({ idxStart, idxEnd, horizontalStep, 
     const isFirst = idx === idxStart;
     const isLast = idx === idxEnd;
     let classNames = 'chart__x';
+    classNames += ' chart__x_visible';
 
     if (isFirst || isLast) {
-      classNames += ' chart__x_visible';
       if (isLast) {
-        node.setAttributeNS(null, 'x', '100%');
         classNames += ' chart__x_last';
       }
-    } else {
-      node.removeAttributeNS(null, 'x');
+    // } else {
+    //   node.removeAttributeNS(null, 'x');
     }
 
     node.setAttributeNS(null, 'class', classNames);
+    node.setAttributeNS(null, 'x', parseFloat((horizontalStep * (idx - idxStart)).toFixed(3)));
   });
 };
 

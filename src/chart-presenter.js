@@ -53,7 +53,7 @@ ChartPresenter.prototype.load = function (data) {
     }
   });
 
-  this._chartView.prepareAxis(this.axis);
+  // this._chartView.prepareAxis(this.axis);
   this._chartZoomerView.render();
   this._chartLineSelectorView.update();
 };

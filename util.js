@@ -14,17 +14,11 @@ function template (template, obj) {
   });
 }
 
-function throttle(fn, ms) {
-  let timeout = null;
+const MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
 
-  return function () {
-    if (timeout) {
-      return;
-    }
-
-    timeout = setTimeout(() => {
-      fn.call(this);
-      timeout = null;
-    }, ms);
-  }
+function dateFormat (date) {
+  return MONTHS[date.getMonth()] + ' ' + date.getDate();
 }

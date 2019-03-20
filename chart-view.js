@@ -7,6 +7,7 @@ function ChartView (presenter, config) {
   this._config = config;
   this._updateAnimStrategy = config.updateAnimStrategy || new ChartUpdateAnimationStrategyEmpty();
   this._classNames = ['chart'].concat(config.baseClassName ? [ config.baseClassName ] : []);
+  this._axis = [];
   this._lines = [];
   this._nominalWidth = config.w;
   this._nominalHeight = config.h;
@@ -16,13 +17,24 @@ function ChartView (presenter, config) {
   });
 }
 
+ChartView.prototype.prepareAxis = function (axis) {
+  this._axis = axis.map((date, idx) => {
+    const node = createSVGNode('text', {
+      'class': 'chart__x',
+      'id': 'x' + idx,
+      'y': '100%',
+    });
+    node.innerHTML = dateFormat(date);
+
+    return node;
+  });
+};
+
 ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.lines[0].raw.length) {
   const lines = this._presenter.lines;
 
   const renderedCount = idxEnd - idxStart;
-  const renderedLines = lines.filter(function (line) {
-    return line.shouldRender;
-  });
+  const renderedLines = lines.filter(line => line.shouldRender);
 
   if (renderedCount <= 0) {
     return this._hide();
@@ -31,7 +43,7 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   let minValue = Infinity;
   let maxValue = -Infinity;
   for (let i = idxStart; i < idxEnd; i++) {
-    const itemsAtIdx = renderedLines.map(function (line) { return line.raw[i] });
+    const itemsAtIdx = renderedLines.map(line => line.raw[i]);
     minValue = Math.min(minValue, Math.min(...itemsAtIdx));
     maxValue = Math.max(maxValue, Math.max(...itemsAtIdx));
   }
@@ -64,11 +76,38 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
   });
 
   if (lines.length === this._lines.length) {
+    // this._renderAxis({
+    //   idxStart,
+    //   idxEnd,
+    //   horizontalStep,
+    //   verticalStep,
+    // });
     return this._update(renderData);
   } else {
     this._invalidate(renderData);
+    // this._renderAxis(horizontalStep, verticalStep);
     return Promise.resolve();
   }
+};
+
+ChartView.prototype._renderAxis = function ({ idxStart, idxEnd, horizontalStep, verticalStep }) {
+  this._axis.forEach(function (node, idx) {
+    const isFirst = idx === idxStart;
+    const isLast = idx === idxEnd;
+    let classNames = 'chart__x';
+
+    if (isFirst || isLast) {
+      classNames += ' chart__x_visible';
+      if (isLast) {
+        node.setAttributeNS(null, 'x', '100%');
+        classNames += ' chart__x_last';
+      }
+    } else {
+      node.removeAttributeNS(null, 'x');
+    }
+
+    node.setAttributeNS(null, 'class', classNames);
+  });
 };
 
 ChartView.prototype._hide = function () {
@@ -82,8 +121,15 @@ ChartView.prototype._hide = function () {
 
 ChartView.prototype._invalidate = function (lines) {
   this._lines = lines;
-  this.host.innerHTML = '';
 
+  const xContainer = createSVGNode('g', {
+    'class': 'chart__x-container',
+  });
+  this._axis.forEach(item => xContainer.appendChild(item));
+
+  const linesContainer = createSVGNode('g', {
+    'class': 'chart__lines-container',
+  });
   lines.forEach(({ color, shouldRender, points }) => {
     const classNameMapper = shouldRender
       ? function (cl) { return [ cl, cl + '__polyline' ].join(' ') }
@@ -96,8 +142,12 @@ ChartView.prototype._invalidate = function (lines) {
 
     this._updateAnimStrategy.hook(path);
 
-    this.host.appendChild(path);
+    linesContainer.appendChild(path);
   });
+
+  this.host.innerHTML = '';
+  this.host.appendChild(xContainer);
+  this.host.appendChild(linesContainer);
 };
 
 ChartView.prototype._update = function (lines) {

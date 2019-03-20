@@ -1,6 +1,11 @@
 const Theme = {
   init () {
-    Theme._toggler.innerHTML = Theme._togglerText.toNight;
+    if (localStorage.getItem('theme') === 'night') {
+      document.body.classList.add('theme-context_night');
+      Theme._toggler.innerHTML = Theme._togglerText.toDay;
+    } else {
+      Theme._toggler.innerHTML = Theme._togglerText.toNight;
+    }
     Theme._toggler.onclick = Theme.toggle;
   },
 
@@ -14,9 +19,11 @@ const Theme = {
 
   toggle () {
     if (Theme.current() === 'day') {
+      localStorage.setItem('theme', 'night');
       document.body.classList.add('theme-context_night');
       Theme._toggler.innerHTML = Theme._togglerText.toDay;
     } else {
+      localStorage.setItem('theme', 'day');
       document.body.classList.remove('theme-context_night');
       Theme._toggler.innerHTML = Theme._togglerText.toNight;
     }
@@ -30,7 +37,6 @@ const Theme = {
 };
 
 Theme.init();
-
 
 DataLoader.load('./chart_data.json').then(function (_charts) {
   const charts = _charts.map((chart, idx) => ({

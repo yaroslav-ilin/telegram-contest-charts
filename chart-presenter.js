@@ -4,6 +4,7 @@ function ChartPresenter () {
   }
 
   this._input = null;
+  this._host = null;
   this._chartView = new ChartView(this, {
     baseClassName: 'chart-main',
     updateAnimStrategy: new ChartUpdateAnimationStrategySmooth(),
@@ -28,13 +29,15 @@ function ChartPresenter () {
 ChartPresenter.prototype.load = function (data) {
   this._input = data;
 
+  document.querySelector('.app__title').innerHTML = data.title;
+
   this.lines = [];
   this._input.columns.forEach(column => {
     const columnKey = column[0];
 
     switch (columnKey) {
       case 'x':
-        this.axis = column.slice(1);
+        this.axis = column.slice(1).map(timestamp => new Date(timestamp));
         break;
       default: {
         this.lines.push({
@@ -50,12 +53,14 @@ ChartPresenter.prototype.load = function (data) {
     }
   });
 
-  document.querySelector('.app__title').innerHTML = data.title;
+  this._chartView.prepareAxis(this.axis);
   this._chartZoomerView.render();
   this._chartLineSelectorView.update();
 };
 
 ChartPresenter.prototype.attach = function (parent) {
+  this._host = parent;
+
   parent.appendChild(this._chartView.host);
   parent.appendChild(this._chartZoomerView.host);
   parent.appendChild(this._chartLineSelectorView.host);
@@ -102,4 +107,7 @@ ChartPresenter.prototype.handlePan = (function () {
 
 ChartPresenter.prototype.dispose = function () {
   this._chartZoomerView.dispose();
+  if (this._host) {
+    this._host.innerHTML = '';
+  }
 };

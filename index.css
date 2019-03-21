@@ -212,9 +212,15 @@ input:checked + .checkbox__checkmark::after {
   transform: rotate(-90deg)
 }
 
+.chart-list {
+  overflow: hidden;
+}
 .chart-list__item {
+  box-sizing: border-box;
   width: 100%;
-  padding: 10px 0;
+  padding: 16px 0 10px;
+  margin: 10px 8px;
+  border-bottom: 1px solid #e6ecf0;
 }
 
 .theme-button {
@@ -330,6 +336,7 @@ input:checked + .checkbox__checkmark::after {
 }
 
 body.theme-context_night { background-color: #242f3d }
+.theme-context_night .checkbox { color: #e8ecee; border-color: #354657 }
 .theme-context_night .app__header-wrap { background-color: #242f3d }
 .theme-context_night .app__title { color: #fff }
 .theme-context_night .hamburger__inner,
@@ -337,11 +344,11 @@ body.theme-context_night { background-color: #242f3d }
 .theme-context_night .hamburger__inner::after {
   background-color: #fff;
 }
+.theme-context_night .chart-list__item { border-color: #354657 }
 .theme-context_night .chart-zoomer__pan::after {
   box-shadow: 0px 0px 0px 999px rgba(23,35,49,.4) }
 .theme-context_night .chart-zoomer__pan { border-color: #41566a }
 .theme-context_night .chart-zoomer__pan-left-ruler,
 .theme-context_night .chart-zoomer__pan-right-ruler {
   background-color: #41566a }
-.theme-context_night .checkbox { color: #e8ecee; border-color: #354657 }
 .theme-context_night .chart__x { fill: #556777 }

@@ -31,32 +31,12 @@ function ChartPresenter () {
 
 ChartPresenter.prototype.load = function (data) {
   this._input = data;
+  this.axis = data.axis;
+  this.lines = data.lines;
 
-  document.querySelector('.app__title').innerHTML = data.title;
+  document.querySelector('.app__title').innerHTML = data.source.title;
 
-  this.lines = [];
-  this._input['columns'].forEach(column => {
-    const columnKey = column[0];
-
-    switch (columnKey) {
-      case 'x':
-        this.axis = column.slice(1).map(timestamp => new Date(timestamp));
-        break;
-      default: {
-        this.lines.push({
-          tag: columnKey,
-          name: this._input['names'][columnKey],
-          color: this._input['colors'][columnKey],
-          type: this._input['types'][columnKey],
-          shouldRender: true,
-          raw: column.slice(1),
-        });
-        break;
-      }
-    }
-  });
-
-  // this._chartView.prepareAxis(this.axis);
+  this._chartView.prepareAxis(this.axis);
   this._chartZoomerView.render();
   this._chartLineSelectorView.update();
 };

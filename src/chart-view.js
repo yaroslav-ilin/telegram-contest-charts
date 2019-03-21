@@ -1,12 +1,12 @@
 /**
   @constructor
  */
-function ChartView (presenter, config) {
+function ChartView (datasource, config) {
   if (!(this instanceof ChartView)) {
-    return new ChartView(presenter, config);
+    return new ChartView(datasource, config);
   }
 
-  this._presenter = presenter;
+  this._datasource = datasource;
   this._config = config;
   this._updateAnimStrategy = config.updateAnimStrategy || new ChartUpdateAnimationStrategyEmpty();
   this._classNames = ['chart'].concat(config.baseClassName ? [ config.baseClassName ] : []);
@@ -28,20 +28,15 @@ ChartView.prototype.prepareAxis = function (axis) {
       'y': '100%',
     });
     node.innerHTML = dateFormat(date);
-    node.appendChild(
-      createSVGNode('animate', {
-        attributeName: 'd',
-        dur: '0.3s',
-        fill: 'freeze',
-      })
-    );
 
-    return node;
+    return {
+      node,
+    };
   });
 };
 
-ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.lines[0].raw.length) {
-  const lines = this._presenter.lines;
+ChartView.prototype.render = function (idxStart = 0, idxEnd = this._datasource.lines[0].raw.length) {
+  const lines = this._datasource.lines;
 
   const renderedCount = idxEnd - idxStart;
   const renderedLines = lines.filter(line => line.shouldRender);
@@ -97,11 +92,13 @@ ChartView.prototype.render = function (idxStart = 0, idxEnd = this._presenter.li
 };
 
 ChartView.prototype._renderAxis = function ({ idxStart, idxEnd, horizontalStep, verticalStep }) {
-  this._axis.forEach(function (node, idx) {
+  this._axis.forEach(function ({ node }, idx) {
     const isFirst = idx === idxStart;
     const isLast = idx === idxEnd;
     let classNames = 'chart__x';
-    classNames += ' chart__x_visible';
+    if (idx % 10 === 0) {
+      classNames += ' chart__x_visible';
+    }
 
     if (isFirst || isLast) {
       if (isLast) {
@@ -111,8 +108,10 @@ ChartView.prototype._renderAxis = function ({ idxStart, idxEnd, horizontalStep, 
     //   node.removeAttributeNS(null, 'x');
     }
 
+    const x = Math.round(horizontalStep * (idx - idxStart));
+
     node.setAttributeNS(null, 'class', classNames);
-    node.setAttributeNS(null, 'x', parseFloat((horizontalStep * (idx - idxStart)).toFixed(3)));
+    node.style.transform = 'translate(' + x + 'px,0)';
   });
 };
 
@@ -131,7 +130,7 @@ ChartView.prototype._invalidate = function (lines) {
   const xContainer = createSVGNode('g', {
     'class': 'chart__x-container',
   });
-  this._axis.forEach(item => xContainer.appendChild(item));
+  this._axis.forEach(item => xContainer.appendChild(item.node));
 
   const linesContainer = createSVGNode('g', {
     'class': 'chart__lines-container',

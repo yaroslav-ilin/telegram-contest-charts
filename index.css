@@ -14,19 +14,48 @@ body {
   width: 100%;
   margin: 0 auto;
 }
-.app__content {
-  flex: 1 0 auto;
+.app__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.app__header-wrap {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  height: 60px;
+  display: flex;
+  justify-content: space-between;
+  background-color: #fff;
 }
 .app__title {
   font-size: 20px;
-  color: #222222;
+  color: #222;
   margin: 0;
   padding: 16px;
+  flex-grow: 1;
+}
+.app__content {
+  padding-top: 60px;
+  flex: 1 0 auto;
 }
 .app__footer {
   flex-shrink: 0;
   text-align: center;
   padding: 16px;
+}
+.app__chart-selector {
+  display: none;
+}
+.app_selecting .app__header .app__title {
+  opacity: .3;
+}
+.app_selecting .app__chart-selector {
+  display: block;
+}
+.app_selecting .app__chart {
+  display: none;
 }
 
 .checkbox {
@@ -97,7 +126,7 @@ input:checked + .checkbox__checkmark::after {
   background-color: transparent;
   color: #3ca0e1;
   font-size: 16px;
-  margin: 1px;
+  margin: 0;
   padding: 0;
   border: none;
   outline: none;
@@ -107,17 +136,101 @@ input:checked + .checkbox__checkmark::after {
   user-select: none;
   touch-action: manipulation;
 }
-.button:hover,.button:focus {
+
+.hamburger {
+  font: inherit;
+  display: inline-block;
+  overflow: visible;
+  margin: 0;
+  padding: 16px;
+  cursor: pointer;
+  transition-timing-function: linear;
+  transition-duration: .15s;
+  transition-property: opacity,filter;
+  text-transform: none;
+  color: inherit;
+  border: 0;
+  background-color: transparent;
+}
+.hamburger__wrap {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 21px
+}
+.hamburger__inner {
+  top: 50%;
+  display: block;
+  margin-top: -2px
+}
+.hamburger__inner,
+.hamburger__inner::after,
+.hamburger__inner::before {
+  position: absolute;
+  width: 30px;
+  height: 3px;
+  transition-timing-function: ease;
+  transition-duration: .15s;
+  transition-property: transform;
+  border-radius: 3px;
+  background-color: #222;
+}
+.hamburger__inner::after,
+.hamburger__inner::before {
+  display: block;
+  content: ''
+}
+.hamburger__inner::before {
+  top: -8px
+}
+.hamburger__inner::after {
+  bottom: -8px
+}
+.hamburger_spin .hamburger__inner {
+  transition-timing-function: cubic-bezier(.55,.055,.675,.19);
+  transition-duration: .22s
+}
+.hamburger_spin .hamburger__inner::before {
+  transition: top .1s ease-in .25s,opacity .1s ease-in
+}
+.hamburger_spin .hamburger__inner:after {
+  transition: bottom .1s ease-in .25s,transform .22s cubic-bezier(.55,.055,.675,.19)
+}
+.app_selecting .hamburger_spin .hamburger__inner {
+  transition-delay: .12s;
+  transition-timing-function: cubic-bezier(.215,.61,.355,1);
+  transform: rotate(225deg)
+}
+.app_selecting .hamburger_spin .hamburger__inner::before {
+  top: 0;
+  transition: top .1s ease-out,opacity .1s ease-out .12s;
+  opacity: 0
+}
+.app_selecting .hamburger_spin .hamburger__inner::after {
+  bottom: 0;
+  transition: bottom .1s ease-out,transform .22s cubic-bezier(.215,.61,.355,1) .12s;
+  transform: rotate(-90deg)
+}
+
+.chart-list__item {
+  width: 100%;
+  padding: 10px 0;
+}
+
+.theme-button {
+  margin: 1px;
+}
+.theme-button:hover,
+.theme-button:focus {
   margin-bottom: 0;
   border-bottom: 1px dashed;
 }
-
 
 .chart__x {
   fill: #96a2aa;
   visibility: hidden;
   opacity: 0;
-  transition: opacity .3s, visibility .3s;
+  transition: opacity .3s, visibility .3s, transform .3s;
 }
 .chart__x_visible {
   visibility: visible;
@@ -216,9 +329,14 @@ input:checked + .checkbox__checkmark::after {
   transition-timing-function: ease-out, ease-out;
 }
 
-
 body.theme-context_night { background-color: #242f3d }
+.theme-context_night .app__header-wrap { background-color: #242f3d }
 .theme-context_night .app__title { color: #fff }
+.theme-context_night .hamburger__inner,
+.theme-context_night .hamburger__inner::before,
+.theme-context_night .hamburger__inner::after {
+  background-color: #fff;
+}
 .theme-context_night .chart-zoomer__pan::after {
   box-shadow: 0px 0px 0px 999px rgba(23,35,49,.4) }
 .theme-context_night .chart-zoomer__pan { border-color: #41566a }

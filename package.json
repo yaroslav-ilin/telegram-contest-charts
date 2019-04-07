@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "browser-sync start --server --files '*'",
-    "build": "uglifyjs --compress --mangle --output app.min.js src/app.js"
+    "build": "uglifyjs --compress --mangle --toplevel --output app.min.js app.js && echo 'gzipped size (in bytes):' && gzip -c app.min.js | wc -c"
   },
   "keywords": [],
   "author": "Yaroslav <nilfalse@yandex.com>",

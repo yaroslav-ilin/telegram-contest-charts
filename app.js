@@ -23,12 +23,26 @@ function createNode (parent, tag, attrs) {
   return el;
 }
 
-function listen (node, evt, callback) {
-  node.addEventListener(evt, callback, false);
-  return function () {
-    node.removeEventListener(evt, callback, false);
-  }
-}
+var listen = (function () {
+  var supportsPassive = false;
+  try {
+    var opts = Object.defineProperty({}, 'passive', {
+      get: function () {
+        supportsPassive = true;
+      }
+    });
+    window.addEventListener('testPassive', null, opts);
+    window.removeEventListener('testPassive', null, opts);
+  } catch (e) {}
+  var passiveArgs = supportsPassive ? { passive: true } : false;
+
+  return function listen (node, evt, callback, tryPassive) {
+    node.addEventListener(evt, callback, tryPassive === true ? passiveArgs : false);
+    return function () {
+      node.removeEventListener(evt, callback, tryPassive === true ? passiveArgs : false);
+    }
+  };
+}());
 
 // theme
 
@@ -83,20 +97,24 @@ function Checkboxes (parent, items, callback) {
   }
 
   function createCheckbox (item) {
-    var view = createNode(host, 'label', [ ['class', 'checkbox'] ]);
+    var view = createNode(host, 'label', [
+      ['class', 'checkbox'], ['style', 'color: ' + item[1]]
+    ]);
     listen(view, 'mousedown', handleMouseDown);
-    listen(view, 'touchstart', handleMouseDown);
+    listen(view, 'touchstart', handleMouseDown, true);
     listen(view, 'touchend', handleMouseUp);
     listen(view, 'click', handleMouseUp);
 
     // <input type="checkbox" checked="checked" name="{name}" />
-    listen(createNode(view, 'input', [ 
+    listen(createNode(view, 'input', [
       ['type', 'checkbox'], ['checked', 'checked'], ['name', item[0]]
     ]), 'change', handleCheck);
 
+    createNode(view, 'div', [ ['class', 'checkbox__bg'] ]);
+
     // <span class="checkbox__checkmark" style="color: {color}"></span>
     createNode(view, 'span', [
-      ['class', 'checkbox__checkmark'], ['style', 'color: ' + item[1]],
+      ['class', 'checkbox__checkmark']
     ]);
     // <span class="checkbox__label">{name}</span>
     createNode(view, 'span', [ ['class', 'checkbox__label'] ]).innerText = item[2];
@@ -127,14 +145,16 @@ function ChartScreen (parent, data) {
 
   new Preview(view, data);
 
-  var checkboxesData = [];
+  var columns = [];
   for (var i = 0; i < data.columns.length; i++) {
     var column = data.columns[i];
     var colName = column[0];
     if (colName === 'x') { continue; }
-    checkboxesData.push([ colName, data.colors[colName], data.names[colName] ]);
+    columns.push([ colName, data.colors[colName], data.names[colName] ]);
   }
-  new Checkboxes(view, checkboxesData, console.log);
+  new Checkboxes(view, columns, function (items) {
+    console.log(items);
+  });
 }
 
 // init

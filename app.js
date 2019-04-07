@@ -91,7 +91,7 @@ function Checkboxes (parent, items, callback) {
     inp.type = 'checkbox';
     inp.checked = true;
     inp.name = item[0];
-    listen(inp, 'change', handleCheck);
+    inp.onchange = handleCheck;
 
     createNode(view, 'div', 'checkbox__bg');
 
@@ -104,8 +104,37 @@ function Checkboxes (parent, items, callback) {
 }
 
 
+function Popover (parent) {
+  var view = createNode(parent, 'button', 'popover button card');
+
+  this.setOrigin = function (x, y) {
+    view.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+  };
+  this.setContent = function (newContent) {
+    view.innerText = newContent;
+  };
+}
+
+
 function Chart (parent, data) {
   var view = createNode(parent, 'div', 'chart');
+  var popover = new Popover(view);
+
+  popover.setContent('POPOVER');
+
+  view.onmousemove = function (evt) {
+    var obj = evt.currentTarget;
+    var left = 0;
+    var top = 0;
+    while (obj.offsetParent) {
+      left += obj.offsetLeft;
+      top += obj.offsetTop;
+      obj = obj.offsetParent;
+    }
+    popover.setOrigin(evt.pageX - left, evt.pageY - top);
+  }
+
+  this.view = view;
 }
 
 
@@ -288,10 +317,27 @@ function ChartScreen (parent, data, idx) {
   var view = createNode(parent, 'article', 'screen');
 
   var header = createNode(view, 'header', 'header');
-  var title = createNode(header, 'h1', 'title');
-  title.innerText = 'Chart #' + String(idx + 1)
 
-  new Chart(view, data);
+  var hMain = createNode(header, 'div', 'header__section header__main');
+  var title = createNode(hMain, 'h1', 'header__title');
+  title.innerText = 'Chart #' + String(idx + 1);
+  var period1 = createNode(hMain, 'h2', 'header__period');
+  period1.innerText = '1 Apr 2019 - 30 Apr 2019';
+
+  var hDetailed = createNode(header, 'div', 'header__section header__detailed');
+  var zoomButton = createNode(hDetailed, 'button', 'button zoom-out');
+  zoomButton.innerText = 'Zoom Out';
+  zoomButton.onclick = function () {
+    view.classList.remove('screen_detailed');
+  };
+  var period2 = createNode(hDetailed, 'h2', 'header__period');
+  period2.innerText = 'Saturday, 20 Apr 2019';
+
+  var chart = new Chart(view, data);
+
+  chart.view.onclick = function () {
+    view.classList.add('screen_detailed');
+  };
 
   new Preview(view, data.columns[0].slice(1));
 

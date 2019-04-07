@@ -24,22 +24,66 @@ body {
   position: sticky;
   top: 0;
   left: 0;
-  display: flex;
-  justify-content: space-between;
+  height: 54px;
   background-color: #fff;
+  color: #222;
   z-index: 9;
 }
-.title {
+.header__section {
+  position: absolute;
   box-sizing: border-box;
-  max-width: 500px;
+  padding: 18px;
   width: 100%;
-  margin: 0 auto;
-  height: 60px;
-  font-size: 20px;
-  color: #222;
-  padding: 16px;
-  flex-grow: 1;
+  display: flex;
+  justify-content: space-between;
 }
+.header__title {
+  margin: 0;
+  font-size: 16px;
+}
+.header__period {
+  margin: 0;
+  font-size: 13px;
+}
+.header__detailed 
+.screen_detailed .header__main {
+  display: none;
+}
+
+.header__detailed .zoom-out,
+.header__detailed .header__period {
+  opacity: 0;
+  transform: scale(0) translate(0, 8px);
+}
+.screen_detailed .header__detailed .zoom-out,
+.screen_detailed .header__detailed .header__period {
+  opacity: 1;
+  transform: scale(1) translate(0, 0);
+}
+.screen_detailed .header__main .header__title,
+.screen_detailed .header__main .header__period {
+  opacity: 0;
+  transform: scale(0) translate(0, -8px);
+}
+
+/* transitions */
+.header__main .header__title {
+  transition: transform .3s, opacity .2s;
+  transform-origin: left top;
+}
+.header__main .header__period {
+  transition: transform .3s, opacity .2s;
+  transform-origin: right top;
+}
+.header__detailed .zoom-out {
+  transition: transform .3s, opacity .2s;
+  transform-origin: left bottom;
+}
+.header__detailed .header__period {
+  transition: transform .3s, opacity .2s;
+  transform-origin: right bottom;
+}
+
 
 .checkboxes {
   margin: 8px;
@@ -134,7 +178,30 @@ input:checked ~ .checkbox__label {
   touch-action: manipulation;
 }
 
+.card {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 1px 1px #d8d8d8;
+  position: absolute;
+  padding: 10px;
+  max-width: 200px;
+}
+
+.zoom-out {
+  padding-left: 22px;
+  background: no-repeat left center;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='4 4 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle clip-rule='evenodd' cx='16.8' cy='16.3' fill='transparent' fill-rule='evenodd' r='8'/%3E%3Cpath clip-rule='evenodd' fill='%233ca0e1' fill-rule='evenodd' d='M23.9 21.6l-3 2.6 8.5 8.5 2.8-2.8z'/%3E%3Cpath clip-rule='evenodd' d='M16.9 7.1c-5 0-9 4-9 9s4 9 9 9 9-4 9-9-4-9-9-9zm0 15c-3.3 0-6-2.7-6-6s2.7-6 6-6 6 2.7 6 6-2.7 6-6 6z' fill='%233ca0e1' fill-rule='evenodd'/%3E%3Cpath clip-rule='evenodd' fill='%233ca0e1' fill-rule='evenodd' d='M13 15h8v2h-8z'/%3E%3C/svg%3E");
+}
+
+.popover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 13px;
+}
+
 .chart {
+  position: relative;
   height: 300px;
 }
 
@@ -264,8 +331,11 @@ input:checked ~ .checkbox__label {
 }
 
 body.night { background-color: #242f3d }
-.night .header { background-color: #242f3d }
-.night .title { color: #fff }
+.night .header { background-color: #242f3d;
+  color: #fff }
+.night .card {
+  background-color: #253241;
+  box-shadow: 0 1px 1px 1px #1e2834 }
 .night .pan::after {
   box-shadow: 0px 0px 0px 999px rgba(23,35,49,.4) }
 .night .pan { border-color: #56626d }

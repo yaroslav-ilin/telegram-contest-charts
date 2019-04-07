@@ -22,53 +22,12 @@
   <link rel="manifest" href="web-manifest.json" />
   <link rel="stylesheet" href="index.css" />
 </head>
-<body>
-<div id="root" class="app">
-  <header class="app__header">
-    <div class="app__header-wrap">
-      <h1 class="app__title"></h1>
-      <button class="button hamburger hamburger_spin" id="hamburger">
-        <div class="hamburger__wrap">
-          <span class="hamburger__inner"></span>
-        </div>
-      </button>
-    </div>
-  </header>
-  <main id="chart-selector" class="app__content app__chart-selector">
-    <h1 class="app__title">Choose a chart</h1>
-    <article id="chart-list" class="chart-list"></article>
-  </main>
-  <main id="chart" class="app__content app__chart"></main>
+<body class="app">
+<div class="content" id="root"></div>
+<footer class="footer">
+  <button class="button" id="btnTheme" onclick="setTheme(isNightTheme=!isNightTheme)"></button>
+</footer>
 
-  <footer class="app__footer">
-    <button class="button theme-button" id="themeToggle"></button>
-  </footer>
-</div>
-<script src="src/theme.js"></script>
-
-<script type="x-custom/template" id="chart-zoomer-template">
-  <div class="chart-zoomer__pan">
-    <div class="chart-zoomer__pan-left-ruler"></div>
-    <div class="chart-zoomer__pan-right-ruler"></div>
-  </div>
-</script>
-<script type="x-custom/template" id="line-selector-item-template">
-  <label class="checkbox">
-    <input type="checkbox" checked="checked" name="{tag}" />
-    <span class="checkbox__checkmark" style="color: {color}"></span>
-    <span class="checkbox__label">{name}</span>
-  </label>
-</script>
-
-<script src="src/util.js"></script>
-<script src="src/chart-zoomer-view.js"></script>
-<script src="src/chart-animation-strategies.js"></script>
-<script src="src/chart-view.js"></script>
-<script src="src/chart-line-selector-view.js"></script>
-<script src="src/chart-presenter.js"></script>
-<script src="src/data-loader.js"></script>
-<script src="src/chart-list.js"></script>
-<script src="src/index.js"></script>
-<!-- <script src="app.js"></script> -->
+<script src="src/app.js"></script>
 </body>
 </html>

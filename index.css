@@ -14,6 +14,11 @@ body {
   width: 100%;
   margin: 0 auto;
 }
+.content {
+  flex: 1 0 auto;
+}
+
+
 .app__header {
   position: fixed;
   top: 0;
@@ -36,25 +41,7 @@ body {
   padding: 16px;
   flex-grow: 1;
 }
-.app__content {
-  padding-top: 60px;
-  flex: 1 0 auto;
-}
-.app__footer {
-  flex-shrink: 0;
-  text-align: center;
-  padding: 16px;
-}
 .app__chart-selector {
-  display: none;
-}
-.app_selecting .app__header .app__title {
-  opacity: .3;
-}
-.app_selecting .app__chart-selector {
-  display: block;
-}
-.app_selecting .app__chart {
   display: none;
 }
 
@@ -67,6 +54,7 @@ body {
   border: 1px solid #e6ecf0;
   border-radius: 20px;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
@@ -131,85 +119,11 @@ input:checked + .checkbox__checkmark::after {
   border: none;
   outline: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   -moz-user-select: none;
   -webkit-user-select: none;
   user-select: none;
   touch-action: manipulation;
-}
-
-.hamburger {
-  font: inherit;
-  display: inline-block;
-  overflow: visible;
-  margin: 0;
-  padding: 16px;
-  cursor: pointer;
-  transition-timing-function: linear;
-  transition-duration: .15s;
-  transition-property: opacity,filter;
-  text-transform: none;
-  color: inherit;
-  border: 0;
-  background-color: transparent;
-}
-.hamburger__wrap {
-  position: relative;
-  display: inline-block;
-  width: 30px;
-  height: 21px
-}
-.hamburger__inner {
-  top: 50%;
-  display: block;
-  margin-top: -2px
-}
-.hamburger__inner,
-.hamburger__inner::after,
-.hamburger__inner::before {
-  position: absolute;
-  width: 30px;
-  height: 3px;
-  transition-timing-function: ease;
-  transition-duration: .15s;
-  transition-property: transform;
-  border-radius: 3px;
-  background-color: #222;
-}
-.hamburger__inner::after,
-.hamburger__inner::before {
-  display: block;
-  content: ''
-}
-.hamburger__inner::before {
-  top: -8px
-}
-.hamburger__inner::after {
-  bottom: -8px
-}
-.hamburger_spin .hamburger__inner {
-  transition-timing-function: cubic-bezier(.55,.055,.675,.19);
-  transition-duration: .22s
-}
-.hamburger_spin .hamburger__inner::before {
-  transition: top .1s ease-in .25s,opacity .1s ease-in
-}
-.hamburger_spin .hamburger__inner:after {
-  transition: bottom .1s ease-in .25s,transform .22s cubic-bezier(.55,.055,.675,.19)
-}
-.app_selecting .hamburger_spin .hamburger__inner {
-  transition-delay: .12s;
-  transition-timing-function: cubic-bezier(.215,.61,.355,1);
-  transform: rotate(225deg)
-}
-.app_selecting .hamburger_spin .hamburger__inner::before {
-  top: 0;
-  transition: top .1s ease-out,opacity .1s ease-out .12s;
-  opacity: 0
-}
-.app_selecting .hamburger_spin .hamburger__inner::after {
-  bottom: 0;
-  transition: bottom .1s ease-out,transform .22s cubic-bezier(.215,.61,.355,1) .12s;
-  transform: rotate(-90deg)
 }
 
 .chart-list {
@@ -221,15 +135,6 @@ input:checked + .checkbox__checkmark::after {
   padding: 16px 0 10px;
   margin: 10px 8px;
   border-bottom: 1px solid #e6ecf0;
-}
-
-.theme-button {
-  margin: 1px;
-}
-.theme-button:hover,
-.theme-button:focus {
-  margin-bottom: 0;
-  border-bottom: 1px dashed;
 }
 
 .chart__x {
@@ -265,7 +170,7 @@ input:checked + .checkbox__checkmark::after {
 }
 
 
-.chart-zoomer {
+.preview {
   height: 50px;
   position: relative;
   overflow: hidden;
@@ -275,7 +180,7 @@ input:checked + .checkbox__checkmark::after {
   user-select: none;
   touch-action: manipulation;
 }
-.chart-zoomer__pan {
+.preview .pan {
   cursor: grab;
   position: absolute;
   top: 0;
@@ -285,10 +190,10 @@ input:checked + .checkbox__checkmark::after {
   border-left-width: 0;
   border-right-width: 0;
 }
-.chart-zoomer__pan:active {
+.preview .pan:active {
   cursor: grabbing;
 }
-.chart-zoomer__pan::after{
+.preview .pan::after{
   content: '';
   position: absolute;
   top: 0;
@@ -297,17 +202,16 @@ input:checked + .checkbox__checkmark::after {
   height: 100%;
   box-shadow: 0px 0px 0px 999px rgba(238,243,252,0.4);
 }
-.chart-zoomer__pan-left-ruler,
-.chart-zoomer__pan-right-ruler {
+.pan .pan_left,
+.pan .pan_right {
   position: absolute;
   width: 4px;
   height: 100%;
   cursor: ew-resize;
   background-color: #ddeaf3;
-  /* z-index: -1; */
 }
-.chart-zoomer__pan-left-ruler::before,
-.chart-zoomer__pan-right-ruler::after {
+.pan_left::before,
+.pan_right::after {
   content: '';
   position: absolute;
   width: 32px;
@@ -315,12 +219,12 @@ input:checked + .checkbox__checkmark::after {
   height: 100%;
   z-index: 1;
 }
-.chart-zoomer__pan-left-ruler { left: 0; }
-.chart-zoomer__pan-left-ruler::before { left: -10px; }
-.chart-zoomer__pan-right-ruler { right: 0; }
-.chart-zoomer__pan-right-ruler::after { right: -16px; }
+.pan_left { left: 0; }
+.pan_left::before { left: -10px; }
+.pan_right { right: 0; }
+.pan_right::after { right: -16px; }
 
-.chart-lines-selector {
+.checkboxes {
   margin: 8px;
 }
 
@@ -335,20 +239,20 @@ input:checked + .checkbox__checkmark::after {
   transition-timing-function: ease-out, ease-out;
 }
 
-body.theme-context_night { background-color: #242f3d }
-.theme-context_night .checkbox { color: #e8ecee; border-color: #354657 }
-.theme-context_night .app__header-wrap { background-color: #242f3d }
-.theme-context_night .app__title { color: #fff }
-.theme-context_night .hamburger__inner,
-.theme-context_night .hamburger__inner::before,
-.theme-context_night .hamburger__inner::after {
-  background-color: #fff;
+.footer {
+  flex-shrink: 0;
+  text-align: center;
+  padding: 16px;
 }
-.theme-context_night .chart-list__item { border-color: #354657 }
-.theme-context_night .chart-zoomer__pan::after {
+
+body.night { background-color: #242f3d }
+.night .checkbox { color: #e8ecee; border-color: #354657 }
+.night .app__header-wrap { background-color: #242f3d }
+.night .app__title { color: #fff }
+.night .pan::after {
   box-shadow: 0px 0px 0px 999px rgba(23,35,49,.4) }
-.theme-context_night .chart-zoomer__pan { border-color: #41566a }
-.theme-context_night .chart-zoomer__pan-left-ruler,
-.theme-context_night .chart-zoomer__pan-right-ruler {
+.night .pan { border-color: #41566a }
+.night .pan_left,
+.night .pan-right {
   background-color: #41566a }
-.theme-context_night .chart__x { fill: #556777 }
+.night .chart__x { fill: #556777 }

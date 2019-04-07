@@ -27,6 +27,21 @@
 <footer class="footer">
   <button class="button" id="btnTheme" onclick="setTheme(isNightTheme=!isNightTheme)"></button>
 </footer>
+<script>
+var isNightTheme = localStorage.getItem('theme') === 'night';
+function setTheme (isNightTheme) {
+  if (isNightTheme) {
+    document.body.classList.add('night');
+    btnTheme.innerText = 'Switch to Day Mode';
+    localStorage.setItem('theme', 'night');
+  } else {
+    document.body.classList.remove('night');
+    btnTheme.innerText = 'Switch to Night Mode';
+    localStorage.removeItem('theme');
+  }
+}
+setTheme(isNightTheme);
+</script>
 
 <script src="app.js"></script>
 </body>

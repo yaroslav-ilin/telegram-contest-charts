@@ -121,10 +121,10 @@ function Preview (parent, axis) {
   var zoomingR = null;
 
   var minSize = 10;
-  var offsetLeft = 0;
-  var offsetRight = 0;
+  var offsetLeft = 50;
+  var offsetRight = 30;
 
-  function syncPan () {
+  function invalidate () {
     var size = 100 - offsetLeft - offsetRight;
     pan.style.left = offsetLeft + '%';
     pan.style.width = size + '%';
@@ -138,7 +138,7 @@ function Preview (parent, axis) {
 
         fn.call(this, deltaPercent, extra);
 
-        syncPan();
+        invalidate();
       };
     };
   }
@@ -275,7 +275,7 @@ function Preview (parent, axis) {
     zoomingR = null;
   }, true);
 
-  syncPan();
+  invalidate();
 
   this.dispose = function () {
     unlistenUp();

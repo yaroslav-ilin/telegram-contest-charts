@@ -134,6 +134,10 @@ input:checked ~ .checkbox__label {
   touch-action: manipulation;
 }
 
+.chart {
+  height: 300px;
+}
+
 .chart__x {
   fill: #96a2aa;
   visibility: hidden;
@@ -177,20 +181,21 @@ input:checked ~ .checkbox__label {
   user-select: none;
   touch-action: manipulation;
 }
-.preview .pan {
+.pan {
   cursor: grab;
   position: absolute;
   top: 0;
   height: 100%;
   box-sizing: border-box;
-  border: 1px solid #ddeaf3;
+  border: 1px solid #c1d1e0;
+  border-radius: 6px;
   border-left-width: 0;
   border-right-width: 0;
 }
-.preview .pan:active {
+.pan:active {
   cursor: grabbing;
 }
-.preview .pan::after{
+.pan::after{
   content: '';
   position: absolute;
   top: 0;
@@ -199,15 +204,28 @@ input:checked ~ .checkbox__label {
   height: 100%;
   box-shadow: 0px 0px 0px 999px rgba(238,243,252,0.4);
 }
-.pan .pan_left,
-.pan .pan_right {
+.pan_left,
+.pan_right {
   position: absolute;
   width: 8px;
   height: 100%;
   cursor: ew-resize;
-  background-color: #ddeaf3;
+  background-color: #c1d1e0;
 }
 .pan_left::before,
+.pan_right::before {
+  content: '';
+  position: absolute;
+  display: block;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  width: 3px;
+  height: 18px;
+  background-color: #fff;
+  border-radius: 6px;
+}
+.pan_left::after,
 .pan_right::after {
   content: '';
   position: absolute;
@@ -215,9 +233,17 @@ input:checked ~ .checkbox__label {
   height: 100%;
   z-index: 1;
 }
-.pan_left { left: 0; }
-.pan_left::before { left: -12px; }
-.pan_right { right: 0; }
+.pan_left {
+  left: 0;
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+.pan_left::after { left: -12px; }
+.pan_right {
+  right: 0;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
 .pan_right::after { right: -12px; }
 
 .chart-preview {
@@ -242,8 +268,8 @@ body.night { background-color: #242f3d }
 .night .title { color: #fff }
 .night .pan::after {
   box-shadow: 0px 0px 0px 999px rgba(23,35,49,.4) }
-.night .pan { border-color: #41566a }
+.night .pan { border-color: #56626d }
 .night .pan_left,
 .night .pan_right {
-  background-color: #41566a }
+  background-color: #56626d }
 .night .chart__x { fill: #556777 }

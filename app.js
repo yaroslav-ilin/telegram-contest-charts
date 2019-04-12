@@ -2,6 +2,7 @@
 
 
 var LONG_TAP_DURATION = 800;
+var SCALE_DURATION = 400;
 
 var MONTHS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -19,6 +20,40 @@ function createNode (parent, tag, clsName) {
   }
   parent.appendChild(el);
   return el;
+}
+
+function createAnimation (value, duration) {
+  var anim = {
+    fromValue: value,
+    toValue: value,
+    current: value,
+    startTime: 0,
+    duration: duration,
+    delay: 0,
+
+    play: function (currentTime, toValue) {
+        anim.startTime = currentTime;
+        anim.toValue = toValue;
+        anim.fromValue = anim.value;
+    },
+
+    update: function (time) {
+      if (anim.current === anim.toValue) {
+        return false;
+      }
+
+      var progress = Math.max(0, 
+        Math.min(1,
+          ((time - anim.startTime) - anim.delay) / anim.duration
+        )
+      );
+      var ease = -progress * (progress - 2);
+      anim.current = anim.fromValue + (anim.toValue - anim.fromValue) * ease;
+
+      return true;
+    }
+  };
+  return anim;
 }
 
 var listen = (function () {
@@ -104,9 +139,10 @@ function Checkboxes (parent, items, callback) {
 }
 
 
-function Popover (parent) {
+function Popover (parent, onSelect) {
   var view = createNode(parent, 'button', 'popover button card');
 
+  view.onclick = onSelect;
   this.setOrigin = function (x, y) {
     view.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
   };
@@ -116,199 +152,313 @@ function Popover (parent) {
 }
 
 
-function Chart (parent, data) {
+function Chart (parent, opts) {
   var view = createNode(parent, 'div', 'chart');
-  var popover = new Popover(view);
+  var popover = new Popover(view, opts.onZoom);
 
-  popover.setContent('POPOVER');
+  var unlisteners = [];
+  var POPOVER_OFFSET = 10;
+  var isFollowingCursor = false;
+  var xColumn = null;
+  var range = {
+    start: 0,
+    end: 1,
+    count: 1,
+    minUnit: 0,
+    maxUnit: 1
+  };
+  var bounds = {
+    max: Number.MIN_VALUE,
+    min: Number.MAX_VALUE
+  };
+  var columns = [];
 
-  view.onmousemove = function (evt) {
-    var obj = evt.currentTarget;
-    var left = 0;
-    var top = 0;
-    while (obj.offsetParent) {
-      left += obj.offsetLeft;
-      top += obj.offsetTop;
-      obj = obj.offsetParent;
-    }
-    popover.setOrigin(evt.pageX - left, evt.pageY - top);
+  var pixelRatio = window.devicePixelRatio;
+  var width = null;
+  var height = null;
+
+  var textXWidth = 30 * pixelRatio;
+  var textYHeight = 45 * pixelRatio;
+
+  var canvas = createNode(view, 'canvas', 'chart__canvas');
+  var ctx = canvas.getContext('2d');
+  var canvasBounds = null;
+
+  function setRange (start, end) {
+    range = {
+      start: start,
+      end: end,
+      count: end - start,
+      width: xColumn.data[end] - xColumn.data[start]
+    };
+    render();
   }
 
-  this.view = view;
+  function load (newData) {
+    function findXName (types) {
+      for (var name in types) {
+        if (types[name] === 'x') {
+          return name;
+        }
+      }
+      return null;
+    }
+
+    data = newData;
+    var nameOfX = findXName(data.types);
+
+    for (var c = 0; c < data.columns.length; c++) {
+      var name = data.columns[c][0];
+      var columnData = data.columns[c].slice(1);
+      var column = {
+          name: name,
+          data: columnData,
+          min: columnData[0],
+          max: columnData[0],
+          opacity: createAnimation(1, SCALE_DURATION)
+      };
+
+      if (name === nameOfX) {
+        column.min = columnData[0];
+        column.max = columnData[columnData.length - 1];
+        xColumn = column;
+      } else {
+        for (var i = 1; i < columnData.length; i++) {
+          var value = columnData[i];
+          if (value < column.min) {
+            column.min = value;
+          } else if (value > column.max) {
+            column.max = value;
+          }
+        }
+        columns.push(column);
+      }
+    }
+
+    handleResize();
+    setRange(0, xColumn.data.length - 1);
+  }
+
+  function handleResize () {
+    canvasBounds = canvas.getBoundingClientRect();
+    var newWidth = canvasBounds.width * pixelRatio;
+    var newHeight = canvasBounds.height * pixelRatio;
+
+    if (width !== newWidth || height !== newHeight) {
+      canvas.width = width = newWidth;
+      canvas.height = height = newHeight;
+    }
+  }
+
+  function render () {
+    ctx.clearRect(0, 0, width, height);
+    // TODO: on resize and filter change:
+    bounds.max = Number.MIN_VALUE;
+    bounds.min = Number.MAX_VALUE;
+    for (var c = 0; c < columns.length; c++) {
+      var column = columns[c];
+      for (var i = range.start; i < range.end; i++) {
+        var y = column.data[i];
+        if (y < bounds.min) {
+          bounds.min = y;
+        }
+        if (y > bounds.max) {
+          bounds.max = y;
+        }
+      }
+    }
+    if (bounds.max === Number.MIN_VALUE) {
+      bounds.max = 1;
+    }
+
+    var yRange = bounds.max - bounds.min;
+
+    for (c = 0; c < columns.length; c++) {
+      column = columns[c];
+      ctx.lineWidth = 1 * pixelRatio;
+      renderPath(column, height / yRange);
+    }
+  }
+
+  function renderPath (yColumn, scaleY) {
+    var scaleX = width / range.width;
+    ctx.strokeStyle = data.colors[yColumn.name];
+
+    ctx.beginPath();
+    ctx.lineJoin = 'bevel';
+
+    var firstY = yColumn.data[range.start] - bounds.min;
+    ctx.moveTo(0, height - firstY * scaleY);
+
+    var step = Math.max(1, Math.floor((range.end - range.start) / width));
+
+    for (var i = range.start + 1; i < range.end; i += step) {
+        var x = xColumn.data[i] - xColumn.data[range.start];
+        var y = yColumn.data[i] - bounds.min;
+        ctx.lineTo(x * scaleX, height - y * scaleY);
+    }
+    ctx.stroke();
+  }
+
+  function dispose () {
+    for (var i = 0; i < unlisteners.length; i++) {
+      unlisteners[i]();
+    }
+  }
+
+  unlisteners.push(
+    listen(window, 'resize', handleResize, true)
+  );
+
+  listen(canvas, 'mousedown', function (evt) {
+    isFollowingCursor = true;
+  }, true);
+  unlisteners.push(
+    listen(document, 'mousemove', function (evt) {
+      if (!isFollowingCursor) {
+        return;
+      }
+      popover.setOrigin(evt.pageX - canvasBounds.left + POPOVER_OFFSET, evt.pageY - canvasBounds.top - POPOVER_OFFSET);
+    }, true)
+  );
+  unlisteners.push(
+    listen(document, 'mouseup', function (evt) {
+      isFollowingCursor = false;
+    }, true)
+  );
+
+  popover.setContent('Pop Over');
+
+  ctx.font = (10 * pixelRatio) + 'px Arial';
+
+  this.load = load;
+  this.setRange = setRange;
+  this.render = render;
+  this.dispose = dispose;
 }
 
 
-function Preview (parent, axis) {
+function Preview (parent, series, callback) {
   var view = createNode(parent, 'div', 'preview');
 
   var pan = createNode(view, 'div', 'pan');
   var panL = createNode(pan, 'div', 'pan_left');
   var panR = createNode(pan, 'div', 'pan_right');
 
-  var panning = null;
-  var zoomingL = null;
-  var zoomingR = null;
+  var needsRedraw = true;
+  var left = null;
+  var right = null;
+  pan.style.left = '0';
+  pan.style.right = '0';
 
-  var minSize = 10;
-  var offsetLeft = 50;
-  var offsetRight = 30;
+  function createGesture (gesture, clientX) {
+    var initialBounds = pan.getBoundingClientRect();
+    if (gesture === 'left' || gesture === 'drag') {
+      var offsetLeft = clientX - initialBounds.left;
+    }
+    if (gesture === 'right' || gesture === 'drag') {
+      var offsetRight = initialBounds.left + initialBounds.width - clientX;
+    }
 
-  function invalidate () {
-    var size = 100 - offsetLeft - offsetRight;
-    pan.style.left = offsetLeft + '%';
-    pan.style.width = size + '%';
-  }
-
-  function createGesture (capturedPageX, totalWidth) {
-    return function (fn, extra) {
-      return function (pageX) {
-        var deltaX = pageX - capturedPageX;
-        var deltaPercent = deltaX / totalWidth * 100;
-
-        fn.call(this, deltaPercent, extra);
-
-        invalidate();
-      };
+    return function (clientX) {
+      var bounds = view.getBoundingClientRect();
+      if (gesture === 'left' || gesture === 'drag') {
+        left = clientX - bounds.left - offsetLeft;
+      }
+      if (gesture === 'right' || gesture === 'drag') {
+        right = window.innerWidth - clientX - bounds.left - offsetRight;
+      }
+      needsRedraw = true;
     };
   }
 
-  function setLeft (delta, capturedLeft) {
-    offsetLeft = Math.max(
-      0,
-      Math.min(
-        100 - offsetRight - minSize,
-        capturedLeft + delta
-      )
-    );
-  }
-  function setRight (delta, capturedRight) {
-    offsetRight = Math.max(
-      0,
-      Math.min(
-        100 - offsetLeft - minSize,
-        capturedRight - delta
-      )
-    );
-  }
-  function setLeftAndRight (delta, captured) {
-    var capturedLeft = captured[0];
-    var capturedSize = captured[1];
+  function createMouseHandler (gesture) {
+    return function (evt) {
+      var move = createGesture(gesture, evt.clientX);
+  
+      if (gesture !== 'drag') {
+        evt.stopPropagation();
+      }
 
-    var capturedRight = 100 - capturedLeft - capturedSize;
-    var limitedDelta = Math.max(
-      -capturedLeft,
-      Math.min(
-        delta,
-        capturedRight
-      )
-    );
-
-    setLeft(limitedDelta, capturedLeft);
-    setRight(limitedDelta, capturedRight);
+      var stopListeningMove = listen(document, 'mousemove', function (evt) {
+        move(evt.clientX);
+      });
+      var stopListeningUp = listen(document, 'mouseup', function () {
+        stopListeningMove();
+        stopListeningUp();
+      }, true);
+    }
   }
 
-  pan.onmousedown = function (evt) {
-    if (!zoomingL && !zoomingR) {
-      var gesture = createGesture(evt.pageX, view.getBoundingClientRect().width);
-      panning = gesture(
-        setLeftAndRight,
-        [ offsetLeft, 100 - offsetLeft - offsetRight ]
-      );
-    }
-  };
-  listen(pan, 'touchstart', function (evt) {
-    if (!zoomingL && !zoomingR) {
-      var gesture = createGesture(evt.changedTouches[0].pageX, view.getBoundingClientRect().width);
-      panning = gesture(
-        setLeftAndRight,
-        [ offsetLeft, 100 - offsetLeft - offsetRight ]
-      );
-    }
-  }, true);
-  panL.onmousedown = function (evt) {
-    evt.stopPropagation();
-    if (!panning) {
-      var gesture = createGesture(evt.pageX, view.getBoundingClientRect().width);
-      zoomingL = gesture(setLeft, offsetLeft);
-    }
-  };
-  listen(panL, 'touchstart', function (evt) {
-    evt.stopPropagation();
-    if (!panning) {
-      var gesture = createGesture(evt.changedTouches[0].pageX, view.getBoundingClientRect().width);
-      zoomingL = gesture(setLeft, offsetLeft);
-    }
-  }, true);
-  panR.onmousedown = function (evt) {
-    evt.stopPropagation();
-    if (!panning) {
-      var gesture = createGesture(evt.pageX, view.getBoundingClientRect().width);
-      zoomingR = gesture(setRight, offsetRight);
-    }
-  };
-  listen(panR, 'touchstart', function (evt) {
-    evt.stopPropagation();
-    if (!panning) {
-      var gesture = createGesture(evt.changedTouches[0].pageX, view.getBoundingClientRect().width);
-      zoomingR = gesture(setRight, offsetRight);
-    }
-  }, true);
-
-  var unlistenMove = listen(document, 'mousemove', function (evt) {
-    if (panning) {
-      panning(evt.pageX);
-      evt.preventDefault();
-    }
-    if (zoomingL) {
-      zoomingL(evt.pageX);
-      evt.preventDefault();
-    }
-    if (zoomingR) {
-      zoomingR(evt.pageX);
-      evt.preventDefault();
-    }
-  });
-  pan.ontouchmove = function (evt) {
-    if (panning) {
-      panning(evt.changedTouches[0].pageX);
-      evt.preventDefault();
-    }
-  };
-  panL.ontouchmove = function (evt) {
-    if (zoomingL) {
-      zoomingL(evt.changedTouches[0].pageX);
-      evt.preventDefault();
-    }
-  };
-  panR.ontouchmove = function (evt) {
-    if (zoomingR) {
-      zoomingR(evt.changedTouches[0].pageX);
-      evt.preventDefault();
-    }
+  var locks = {
+    pan: false,
+    pan_left: false,
+    pan_right: false
   };
 
-  var unlistenUp = listen(document, 'mouseup', function (evt) {
-    panning = null;
-    zoomingL = null;
-    zoomingR = null;
-  }, true);
-  listen(pan, 'touchend', function (evt) {
-    panning = null;
-  }, true);
-  listen(panL, 'touchend', function (evt) {
-    evt.stopPropagation();
-    zoomingL = null;
-  }, true);
-  listen(panR, 'touchend', function (evt) {
-    evt.stopPropagation();
-    zoomingR = null;
-  }, true);
+  function createTouchHandler (gesture) {
+    return function (evt) {
+      if (locks.pan) {
+        return;
+      }
+      var lock = evt.currentTarget.className;
+      if (locks[lock]) {
+        return;
+      }
 
-  invalidate();
+      if (gesture === 'drag' && (locks.pan_left || locks.pan_right)) {
+        return;
+      }
+      var touch = evt.targetTouches[0];
+      var touchIdx = touch.identifier;
+      var move = createGesture(gesture, touch.clientX);
+
+      evt.preventDefault();
+      if (gesture === 'left' || gesture === 'right') {
+        evt.stopPropagation();
+      }
+
+      locks[lock] = true;
+      var stopListeningTouchMove = listen(evt.currentTarget, 'touchmove', function (evt) {
+        for (var i = 0; i < evt.changedTouches.length; i++) {
+          var touch = evt.changedTouches[i];
+          if (touch.identifier === touchIdx) {
+            move(touch.clientX);
+          }
+        }
+      }, true);
+      var stopListeningTouchEnd = listen(evt.currentTarget, 'touchend', function (evt) {
+        for (var i = 0; i < evt.changedTouches.length; i++) {
+          var touch = evt.changedTouches[i];
+          if (touch.identifier === touchIdx) {
+            stopListeningTouchEnd();
+            stopListeningTouchMove();
+            locks[lock] = false;
+          }
+        }
+      }, true);
+    }
+  }
+
+  listen(pan, 'mousedown', createMouseHandler('drag'), true);
+  listen(panL, 'mousedown', createMouseHandler('left'), true);
+  listen(panR, 'mousedown', createMouseHandler('right'), true);
+
+  listen(pan, 'touchstart', createTouchHandler('drag'), false);
+  listen(panL, 'touchstart', createTouchHandler('left'), false);
+  listen(panR, 'touchstart', createTouchHandler('right'), false);
+
+  this.render = function () {
+    if (needsRedraw) {
+      needsRedraw = false;
+
+      pan.style.left = left + 'px';
+      pan.style.right = right + 'px';
+    }
+  };
 
   this.dispose = function () {
-    unlistenUp();
-    unlistenMove();
+    parent.removeChild(view);
   };
 }
 
@@ -333,13 +483,14 @@ function ChartScreen (parent, data, idx) {
   var period2 = createNode(hDetailed, 'h2', 'header__period');
   period2.innerText = 'Saturday, 20 Apr 2019';
 
-  var chart = new Chart(view, data);
+  var chart = window.chart = new Chart(view, {
+    onZoom: function () {
+      view.classList.add('screen_detailed');
+    }
+  });
+  chart.load(data);
 
-  chart.view.onclick = function () {
-    view.classList.add('screen_detailed');
-  };
-
-  new Preview(view, data.columns[0].slice(1));
+  var preview = new Preview(view, data.columns[0], chart.setRange);
 
   var columns = [];
   for (var i = 0; i < data.columns.length; i++) {
@@ -351,21 +502,29 @@ function ChartScreen (parent, data, idx) {
   new Checkboxes(view, columns, function (items) {
     console.log(items);
   });
+
+  function redraw (time) {
+    preview.render();
+
+    requestAnimationFrame(redraw);
+  }
+  requestAnimationFrame(redraw);
 }
 
 // init
 
 
 var xhr = new XMLHttpRequest();
-xhr.open('GET', './chart_data.json', true);
+xhr.open('GET', './datasource/1/overview.json', true);
 xhr.onreadystatechange = function () {
   if (xhr.readyState === 4 && xhr.status === 200) {
     window.json = JSON.parse(xhr.responseText);
     console.log(json);
 
-    for (var i = 0; i < json.length; i++) {
-      new ChartScreen(root, json[i], i);
-    }
+    new ChartScreen(root, json, 0);
+    // for (var i = 0; i < json.length; i++) {
+    //   new ChartScreen(root, json[i], i);
+    // }
   }
 };
 xhr.send(null);

@@ -205,6 +205,11 @@ input:checked ~ .checkbox__label {
   height: 300px;
 }
 
+.chart__canvas {
+  width: 100%;
+  height: 100%;
+}
+
 .chart__x {
   fill: #96a2aa;
   visibility: hidden;
@@ -258,6 +263,11 @@ input:checked ~ .checkbox__label {
   border-radius: 6px;
   border-left-width: 0;
   border-right-width: 0;
+  -webkit-tap-highlight-color: transparent;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
 }
 .pan:active {
   cursor: grabbing;
@@ -296,7 +306,7 @@ input:checked ~ .checkbox__label {
 .pan_right::after {
   content: '';
   position: absolute;
-  width: 32px;
+  width: 48px;
   height: 100%;
   z-index: 1;
 }
@@ -305,13 +315,13 @@ input:checked ~ .checkbox__label {
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;
 }
-.pan_left::after { left: -12px; }
 .pan_right {
   right: 0;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
 }
-.pan_right::after { right: -12px; }
+.pan_left::after { left: -18px; }
+.pan_right::after { right: -18px; }
 
 .chart-preview {
   width: 100%;

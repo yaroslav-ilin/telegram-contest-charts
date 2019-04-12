@@ -152,10 +152,11 @@ function Popover (parent, onSelect) {
 }
 
 
-function Chart (parent, opts) {
+function createChart (parent, opts) {
   var view = createNode(parent, 'div', 'chart');
   var popover = new Popover(view, opts.onZoom);
 
+  var needsRedraw = true;
   var unlisteners = [];
   var POPOVER_OFFSET = 10;
   var isFollowingCursor = false;
@@ -184,16 +185,6 @@ function Chart (parent, opts) {
   var ctx = canvas.getContext('2d');
   var canvasBounds = null;
 
-  function setRange (start, end) {
-    range = {
-      start: start,
-      end: end,
-      count: end - start,
-      width: xColumn.data[end] - xColumn.data[start]
-    };
-    render();
-  }
-
   function load (newData) {
     function findXName (types) {
       for (var name in types) {
@@ -212,7 +203,7 @@ function Chart (parent, opts) {
       var columnData = data.columns[c].slice(1);
       var column = {
           name: name,
-          data: columnData,
+          data: columnData.slice(1),
           min: columnData[0],
           max: columnData[0],
           opacity: createAnimation(1, SCALE_DURATION)
@@ -236,7 +227,7 @@ function Chart (parent, opts) {
     }
 
     handleResize();
-    setRange(0, xColumn.data.length - 1);
+    setRange(0, 100);
   }
 
   function handleResize () {
@@ -250,7 +241,27 @@ function Chart (parent, opts) {
     }
   }
 
-  function render () {
+  function setRange (startPercent, endPercent) {
+    var total = xColumn.data.length - 1;
+    var start = Math.floor(total / 100 * startPercent);
+    var end = Math.round(total / 100 * endPercent);
+
+    range = {
+      start: start,
+      end: end,
+      count: end - start,
+      width: xColumn.data[end] - xColumn.data[start]
+    };
+
+    needsRedraw = true;
+  }
+
+  function render (time) {
+    if (!needsRedraw) {
+      return;
+    }
+    needsRedraw = false;
+
     ctx.clearRect(0, 0, width, height);
     // TODO: on resize and filter change:
     bounds.max = Number.MIN_VALUE;
@@ -292,7 +303,7 @@ function Chart (parent, opts) {
 
     var step = Math.max(1, Math.floor((range.end - range.start) / width));
 
-    for (var i = range.start + 1; i < range.end; i += step) {
+    for (var i = range.start; i < range.end; i += step) {
         var x = xColumn.data[i] - xColumn.data[range.start];
         var y = yColumn.data[i] - bounds.min;
         ctx.lineTo(x * scaleX, height - y * scaleY);
@@ -331,25 +342,26 @@ function Chart (parent, opts) {
 
   ctx.font = (10 * pixelRatio) + 'px Arial';
 
-  this.load = load;
-  this.setRange = setRange;
-  this.render = render;
-  this.dispose = dispose;
+  return {
+    load: load,
+    setRange: setRange,
+    render: render,
+    dispose: dispose
+  };
 }
 
 
-function Preview (parent, series, callback) {
-  var view = createNode(parent, 'div', 'preview');
+function createSlider (parent, series, callback) {
+  var view = createNode(parent, 'div', 'slider');
 
   var pan = createNode(view, 'div', 'pan');
   var panL = createNode(pan, 'div', 'pan_left');
   var panR = createNode(pan, 'div', 'pan_right');
 
   var needsRedraw = true;
-  var left = null;
-  var right = null;
-  pan.style.left = '0';
-  pan.style.right = '0';
+  var minWidth = 35;  // px
+  var left = pan.style.left = 0;
+  var right = pan.style.right = 0;
 
   function createGesture (gesture, clientX) {
     var initialBounds = pan.getBoundingClientRect();
@@ -361,14 +373,26 @@ function Preview (parent, series, callback) {
     }
 
     return function (clientX) {
+      // TODO: rubber bounce back effect once the slider is
+      //       released after getting dragged beyond the edge
       var bounds = view.getBoundingClientRect();
       if (gesture === 'left' || gesture === 'drag') {
-        left = clientX - bounds.left - offsetLeft;
+        var maxLeft = bounds.width - right - minWidth;
+        left = Math.max(0,
+          Math.min(maxLeft, clientX - bounds.left - offsetLeft)
+        );
       }
       if (gesture === 'right' || gesture === 'drag') {
-        right = window.innerWidth - clientX - bounds.left - offsetRight;
+        var maxRight = bounds.width - left - minWidth;
+        right = Math.max(0,
+          Math.min(maxRight, window.innerWidth - clientX - bounds.left - offsetRight)
+        );
       }
       needsRedraw = true;
+
+      var startPercent = 100 / bounds.width * left;
+      var endPercent = 100 / bounds.width * (bounds.width - right);
+      callback(startPercent, endPercent);
     };
   }
 
@@ -448,22 +472,26 @@ function Preview (parent, series, callback) {
   listen(panL, 'touchstart', createTouchHandler('left'), false);
   listen(panR, 'touchstart', createTouchHandler('right'), false);
 
-  this.render = function () {
-    if (needsRedraw) {
-      needsRedraw = false;
+  return {
+    view: view,
 
-      pan.style.left = left + 'px';
-      pan.style.right = right + 'px';
+    render: function () {
+      if (needsRedraw) {
+        needsRedraw = false;
+
+        pan.style.left = left + 'px';
+        pan.style.right = right + 'px';
+      }
+    },
+
+    dispose: function () {
+      parent.removeChild(view);
     }
-  };
-
-  this.dispose = function () {
-    parent.removeChild(view);
   };
 }
 
 
-function ChartScreen (parent, data, idx) {
+function createChartScreen (parent, data, idx) {
   var view = createNode(parent, 'article', 'screen');
 
   var header = createNode(view, 'header', 'header');
@@ -483,14 +511,16 @@ function ChartScreen (parent, data, idx) {
   var period2 = createNode(hDetailed, 'h2', 'header__period');
   period2.innerText = 'Saturday, 20 Apr 2019';
 
-  var chart = window.chart = new Chart(view, {
+  var chart = window.chart = createChart(view, {
     onZoom: function () {
       view.classList.add('screen_detailed');
     }
   });
   chart.load(data);
 
-  var preview = new Preview(view, data.columns[0], chart.setRange);
+  var slider = createSlider(view, data.columns[0].slice(1), chart.setRange);
+  // var previewChart = createChart(slider.view, {});
+  // previewChart.load(data);
 
   var columns = [];
   for (var i = 0; i < data.columns.length; i++) {
@@ -504,7 +534,9 @@ function ChartScreen (parent, data, idx) {
   });
 
   function redraw (time) {
-    preview.render();
+    chart.render(time);
+    // previewChart.render(time);
+    slider.render();
 
     requestAnimationFrame(redraw);
   }
@@ -521,7 +553,7 @@ xhr.onreadystatechange = function () {
     window.json = JSON.parse(xhr.responseText);
     console.log(json);
 
-    new ChartScreen(root, json, 0);
+    createChartScreen(root, json, 0);
     // for (var i = 0; i < json.length; i++) {
     //   new ChartScreen(root, json[i], i);
     // }

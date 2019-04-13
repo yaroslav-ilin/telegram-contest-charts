@@ -23,11 +23,46 @@
   <link rel="stylesheet" href="index.css" />
 </head>
 <body class="app">
+<script>
+const print = (obj, log=true) => {
+  let tab = `  `;
+  let tabs = [tab];
+  let output = '';
+  const quotify = (value) => typeof value === 'string' ? `"${value}"` : value;
+
+  const _print = (_obj) => {
+    let output = '';
+    for (let prop in _obj) {
+      if (!_obj.hasOwnProperty(prop)) continue;
+      if (typeof _obj[prop] === 'object') {
+        tabs.push(tab);
+        output += tabs.slice(1).join('') + `${prop}` + ': ' + '{\n' + _print(_obj[prop]);
+      } else {
+        output += tabs.slice(1).join('') + tab + `${prop}` + ': ' + quotify(_obj[prop]) + '\n';
+      }
+    }
+    tabs.pop();
+    output += tabs.join('') + '}\n';
+    return output;
+  };
+  output = '{\n'+_print(obj);
+  if (log) console.log(output);
+  else return output;
+};
+</script>
 <div class="content" id="root"></div>
 <footer class="footer">
   <button class="button" id="btnTheme" onclick="setTheme(isNightTheme=!isNightTheme)"></button>
 </footer>
 <script>
+var DAY_COLORS = {
+  gridLines: 'rgba(24,45,59, 0.1)'
+};
+var NIGHT_COLORS = {
+  gridLines: 'rgba(255,255,255, 0.1)'
+};
+
+var isThemeChanged = true;
 var isNightTheme = localStorage.getItem('theme') === 'night';
 function setTheme (isNightTheme) {
   if (isNightTheme) {
@@ -39,10 +74,16 @@ function setTheme (isNightTheme) {
     btnTheme.innerText = 'Switch to Night Mode';
     localStorage.removeItem('theme');
   }
+
+  isThemeChanged = true;
 }
 setTheme(isNightTheme);
 </script>
 
 <script src="app.js"></script>
+<script>
+var chart = createChartScreen(root, 'Chart #1');
+chart.load('./datasource/1/overview.json');
+</script>
 </body>
 </html>
